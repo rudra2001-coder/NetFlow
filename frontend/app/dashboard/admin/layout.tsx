@@ -12,6 +12,7 @@ import {
   LogOut, User, Sun, Moon, Globe, RefreshCw, HelpCircle,
   Play,
 } from 'lucide-react';
+import { QuickSearch } from '@/components';
 
 // ============================================================================
 // Types & Interfaces
@@ -199,12 +200,12 @@ function NavItemComponent({
       <button
         onClick={handleClick}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150',
-          'hover:bg-neutral-100 dark:hover:bg-neutral-800',
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200',
+          'hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:translate-x-1',
           isActive
             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium'
             : 'text-neutral-600 dark:text-neutral-400',
-          collapsed && depth === 0 && 'justify-center'
+          collapsed && depth === 0 && 'justify-center hover:translate-x-0 group'
         )}
       >
         <span className="flex-shrink-0">{item.icon}</span>
@@ -509,7 +510,7 @@ export default function DashboardLayout({
 
   const filteredNav = useMemo(() =>
     filterNavItems(navigationItems),
-  [filterNavItems]);
+    [filterNavItems]);
 
   const acknowledgeAlert = (id: string) => {
     setNotifications(prev =>
@@ -539,6 +540,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <QuickSearch />
       <Sidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileOpen}

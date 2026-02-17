@@ -4,8 +4,9 @@ import React, { useState, useMemo } from "react";
 import {
   TrendingUp, TrendingDown, Activity, Wifi, Users, Clock,
   Calendar, Filter, Download, RefreshCw, BarChart3, LineChart as LineChartIcon,
+  Server
 } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Select, Tabs } from "@/components";
+import { Button, Card, CardBody, CardHeader, Select, Tabs, Badge } from "@/components";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -161,6 +162,11 @@ export default function AnalyticsPage() {
             content: <UserGrowth />,
           },
           {
+            id: "sessions",
+            label: "Sessions",
+            content: <SessionsAnalysis />,
+          },
+          {
             id: "services",
             label: "Services",
             content: <ServicesAnalysis />,
@@ -169,6 +175,258 @@ export default function AnalyticsPage() {
         defaultTab="traffic"
         onChange={setActiveTab}
       />
+    </div>
+  );
+}
+
+function SessionsAnalysis() {
+  const sessionData = [
+    { hour: "00:00", active: 850 },
+    { hour: "04:00", active: 420 },
+    { hour: "08:00", active: 1100 },
+    { hour: "12:00", active: 2450 },
+    { hour: "16:00", active: 3100 },
+    { hour: "20:00", active: 1800 },
+    { hour: "23:59", active: 950 },
+  ];
+
+  const authTrendData = [
+    { time: "08:00", success: 120, fail: 5 },
+    { time: "10:00", success: 340, fail: 12 },
+    { time: "12:00", success: 560, fail: 25 },
+    { time: "14:00", success: 420, fail: 18 },
+    { time: "16:00", success: 680, fail: 30 },
+    { time: "18:00", success: 510, fail: 15 },
+    { time: "20:00", success: 290, fail: 8 },
+  ];
+
+  const liveSessions = [
+    { id: "SES-991", user: "mac-00:25:96:FF:21:44", type: "Hotspot", duration: "2h 15m", usage: "1.2 GB", ip: "10.5.50.122", node: "RTR-HQ-01" },
+    { id: "SES-992", user: "user_pppoe_77", type: "PPP", duration: "14h 22m", usage: "8.5 GB", ip: "172.16.10.45", node: "RTR-BRANCH-02" },
+    { id: "SES-993", user: "mac-64:D1:54:11:88:90", type: "Hotspot", duration: "0h 12m", usage: "156 MB", ip: "10.5.50.156", node: "RTR-HQ-01" },
+    { id: "SES-994", user: "support_test_acct", type: "PPP", duration: "1h 05m", usage: "450 MB", ip: "172.16.10.98", node: "RTR-CORE-01" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Session Concurrency */}
+        <Card className="lg:col-span-2 glass border-0 shadow-xl overflow-hidden">
+          <CardHeader
+            title="Session Concurrency"
+            subtitle="Active concurrent sessions over 24 hours"
+          />
+          <CardBody>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={sessionData}>
+                  <defs>
+                    <linearGradient id="colorSessionActive" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
+                  <XAxis dataKey="hour" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(229, 231, 235, 0.5)",
+                      borderRadius: "16px",
+                      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+                    }}
+                    cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                  />
+                  <Bar dataKey="active" fill="url(#colorSessionActive)" radius={[6, 6, 0, 0]} barSize={40} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Quick Session Stats */}
+        <div className="flex flex-col gap-4">
+          <Card className="glass border-0 shadow-lg flex-1 group hover:scale-[1.02] transition-transform duration-300">
+            <CardBody className="flex flex-col justify-center h-full">
+              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg w-fit mb-3 text-primary-600 group-hover:rotate-12 transition-transform">
+                <Clock className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Avg Session Duration</span>
+              <span className="text-3xl font-black dark:text-white">4h 12m</span>
+              <div className="mt-2 flex items-center gap-2 text-success-600 font-medium">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm">+15% vs last week</span>
+              </div>
+            </CardBody>
+          </Card>
+          <Card className="glass border-0 shadow-lg flex-1 group hover:scale-[1.02] transition-transform duration-300">
+            <CardBody className="flex flex-col justify-center h-full">
+              <div className="p-2 bg-success-100 dark:bg-success-900/30 rounded-lg w-fit mb-3 text-success-600 group-hover:rotate-12 transition-transform">
+                <Users className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Total Auth Attempts</span>
+              <span className="text-3xl font-black dark:text-white">12,450</span>
+              <div className="mt-2 flex items-center gap-2 text-neutral-500 font-medium font-mono">
+                <Activity className="w-4 h-4 text-primary-500" />
+                <span className="text-sm">99.1% Success Rate</span>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Auth Trend Chart */}
+        <Card className="glass border-0 shadow-xl">
+          <CardHeader
+            title="Authentication Trend"
+            subtitle="Hourly success vs failure attempts"
+          />
+          <CardBody>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={authTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
+                  <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.9)",
+                      backdropFilter: "blur(12px)",
+                      border: "1px solid rgba(229, 231, 235, 0.5)",
+                      borderRadius: "16px",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="success"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="fail"
+                    stroke="#ef4444"
+                    strokeWidth={3}
+                    strokeDasharray="5 5"
+                    dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-4 flex justify-center gap-6">
+              <div className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                <div className="w-3 h-3 rounded-full bg-success-500" /> Success
+              </div>
+              <div className="flex items-center gap-2 text-xs font-medium text-neutral-500">
+                <div className="w-3 h-1 border-t-2 border-dashed border-error-500" /> Failures
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Device Distribution */}
+        <Card className="glass border-0 shadow-xl">
+          <CardHeader
+            title="Device Distribution"
+            subtitle="Client hardware breakdown"
+          />
+          <CardBody>
+            <div className="space-y-6 pt-4">
+              {[
+                { brand: "Android Devices", count: 480, total: 950, color: "bg-success-500", icon: <TrendingUp className="w-4 h-4 text-success-600" /> },
+                { brand: "iOS / Apple", count: 320, total: 950, color: "bg-primary-500", icon: <TrendingUp className="w-4 h-4 text-primary-600" /> },
+                { brand: "Windows Desktop", count: 110, total: 950, color: "bg-info-500", icon: <TrendingDown className="w-4 h-4 text-info-600" /> },
+                { brand: "Other / IoT", count: 40, total: 950, color: "bg-neutral-400", icon: <Activity className="w-4 h-4 text-neutral-500" /> },
+              ].map((item, i) => (
+                <div key={i} className="group">
+                  <div className="flex justify-between items-end mb-2">
+                    <div>
+                      <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{item.brand}</p>
+                      <p className="text-xs text-neutral-500 font-mono">{item.count} Active</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-neutral-800 dark:text-neutral-200">{Math.round((item.count / item.total) * 100)}%</p>
+                    </div>
+                  </div>
+                  <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.color} transition-all duration-1000 ease-out group-hover:brightness-110`}
+                      style={{ width: `${(item.count / item.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Live Sessions Table */}
+      <Card className="glass overflow-hidden border-0 shadow-2xl">
+        <CardHeader
+          title="Live Sessions"
+          subtitle="Real-time connectivity monitoring across all gateways"
+          action={
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" leftIcon={<Filter className="w-4 h-4" />}>Filter</Button>
+              <Button size="sm" className="bg-primary-600 hover:bg-primary-700">Refresh List</Button>
+            </div>
+          }
+        />
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-neutral-50/50 dark:bg-neutral-800/30">
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">User / Identifier</th>
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Gateway</th>
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Duration</th>
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Usage</th>
+                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              {liveSessions.map((session) => (
+                <tr key={session.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="font-bold text-neutral-900 dark:text-white text-sm">{session.user}</div>
+                    <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{session.ip}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant={session.type === 'PPP' ? 'ppp' : 'default'} pppStatus={session.type === 'PPP' ? 'active' : undefined}>
+                      {session.type}
+                    </Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                      <Server className="w-3.5 h-3.5" />
+                      {session.node}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{session.duration}</td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm font-medium text-primary-600">{session.usage}</span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-error-500 hover:bg-error-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      Disconnect
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }

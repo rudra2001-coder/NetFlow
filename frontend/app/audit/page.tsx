@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/ui/Select';
 import { cn, formatBytes, formatUptime } from '@/lib/utils';
 import {
   Search,
@@ -28,7 +29,14 @@ import {
   MoreVertical,
   Eye,
   RotateCcw,
+  Activity,
+  Globe,
+  ArrowRight
 } from 'lucide-react';
+
+const CardBody = ({ children, className }: { children: React.ReactNode, className?: string }) => (
+  <div className={`p-6 ${className || ''}`}>{children}</div>
+);
 
 // Types
 interface AuditEntry {
@@ -182,7 +190,7 @@ export default function AuditTimelinePage() {
   const formatTimestamp = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
+
     if (diff < 60 * 1000) return 'Just now';
     if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} min ago`;
     if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)} hours ago`;
@@ -220,273 +228,196 @@ export default function AuditTimelinePage() {
   });
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+    <div className="space-y-8 animate-fadeIn">
       {/* Header */}
-      <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-40">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-white">
-                Audit Timeline
-              </h1>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Unified activity log and compliance history
-              </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg text-primary-600">
+              <Shield className="w-6 h-6" />
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" leftIcon={<Download className="w-4 h-4" />}>
-                Export
-              </Button>
-              <Button variant="primary" size="sm" leftIcon={<RefreshCw className="w-4 h-4" />}>
-                Refresh
-              </Button>
-            </div>
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">Audit History</h1>
           </div>
+          <p className="text-neutral-500 dark:text-neutral-400">
+            Unified forensic timeline of every administrative action and system event.
+          </p>
         </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" leftIcon={<Download className="w-4 h-4" />}>Export Log</Button>
+          <Button className="glow-primary" leftIcon={<RefreshCw className="w-4 h-4" />}>Sync History</Button>
+        </div>
+      </div>
 
-        {/* Filters */}
-        <div className="px-6 py-3 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
-          <div className="flex items-center gap-4">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-              <input
-                type="text"
-                placeholder="Search by action, resource, or actor..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-
-            {/* Type Filter */}
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              className="px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm"
-            >
-              <option value="all">All Types</option>
-              <option value="router">Router Changes</option>
-              <option value="ppp">PPP Operations</option>
-              <option value="template">Templates</option>
-              <option value="policy">Policies</option>
-              <option value="automation">Automations</option>
-              <option value="user">User Activity</option>
-              <option value="system">System Events</option>
-            </select>
-
-            {/* Status Filter */}
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="success">Success</option>
-              <option value="failed">Failed</option>
-              <option value="pending">Pending</option>
-            </select>
-
-            {/* Date Range */}
-            <select
-              value={filters.dateRange}
-              onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
-              className="px-3 py-2 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg text-sm"
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="custom">Custom Range</option>
-            </select>
+      {/* Filters Bar */}
+      <Card className="glass px-0 py-0">
+        <CardBody className="p-4 flex flex-wrap gap-4 items-center">
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <input
+              type="text"
+              placeholder="Search by action, resource, or actor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-neutral-100 dark:bg-neutral-800 border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+            />
           </div>
-        </div>
-      </header>
+          <Select
+            value={filters.type}
+            onChange={(val: string) => setFilters({ ...filters, type: val })}
+            className="w-auto min-w-[160px]"
+            options={[
+              { value: "all", label: "All Types" },
+              { value: "router", label: "Router Changes" },
+              { value: "ppp", label: "PPP Operations" },
+              { value: "template", label: "Templates" },
+              { value: "policy", label: "Policies" },
+              { value: "automation", label: "Automations" },
+              { value: "user", label: "User Activity" },
+            ]}
+          />
+          <Select
+            value={filters.status}
+            onChange={(val: string) => setFilters({ ...filters, status: val })}
+            className="w-auto min-w-[140px]"
+            options={[
+              { value: "all", label: "All Status" },
+              { value: "success", label: "Success" },
+              { value: "failed", label: "Failed" },
+              { value: "pending", label: "Pending" },
+            ]}
+          />
+          <Button variant="ghost" size="sm" className="text-neutral-500" leftIcon={<Filter className="w-4 h-4" />}>More Filters</Button>
+        </CardBody>
+      </Card>
 
-      <main className="p-6">
-        <div className="flex gap-6">
-          {/* Timeline */}
-          <div className="flex-1">
-            <Card>
-              <CardContent className="p-0">
-                <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
-                  {filteredEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={cn(
-                        'p-4 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors',
-                        selectedEntry?.id === entry.id && 'bg-primary-50 dark:bg-primary-900/20'
-                      )}
-                      onClick={() => setSelectedEntry(entry)}
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Icon */}
-                        <div
-                          className={cn(
-                            'flex items-center justify-center w-10 h-10 rounded-lg shrink-0',
-                            typeColors[entry.type]
-                          )}
-                        >
-                          {typeIcons[entry.type]}
-                        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Timeline List */}
+        <div className="lg:col-span-8">
+          <Card className="glass overflow-hidden px-0">
+            <CardBody className="p-0">
+              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {filteredEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={cn(
+                      'p-5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 cursor-pointer transition-all border-l-4',
+                      selectedEntry?.id === entry.id ? 'bg-primary-50/50 dark:bg-primary-900/10 border-primary-500' : 'border-transparent'
+                    )}
+                    onClick={() => setSelectedEntry(entry)}
+                  >
+                    <div className="flex items-start gap-5">
+                      <div className={cn(
+                        'flex items-center justify-center w-12 h-12 rounded-2xl shrink-0 shadow-sm',
+                        typeColors[entry.type]
+                      )}>
+                        {typeIcons[entry.type]}
+                      </div>
 
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-4 mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-neutral-900 dark:text-white">
+                            <span className="font-bold text-neutral-900 dark:text-white">
                               {entry.action}
                             </span>
                             {getStatusIcon(entry.status)}
                           </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                              {entry.resource.name}
-                            </span>
-                            <span className="text-neutral-300">•</span>
-                            <span className="text-sm text-neutral-400">
-                              by {entry.actor.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-xs text-neutral-400">
-                              {formatTimestamp(entry.timestamp)}
-                            </span>
-                            {entry.ipAddress && (
-                              <span className="text-xs text-neutral-400 font-mono">
-                                {entry.ipAddress}
-                              </span>
-                            )}
-                          </div>
+                          <span className="text-xs font-medium text-neutral-400 whitespace-nowrap">
+                            {formatTimestamp(entry.timestamp)}
+                          </span>
                         </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          {entry.status === 'failed' && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                            <Activity className="w-3.5 h-3.5 text-neutral-400" />
+                            {entry.resource.name}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                            <User className="w-3.5 h-3.5 text-neutral-400" />
+                            {entry.actor.name}
+                          </div>
+                          {entry.ipAddress && (
+                            <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-mono">
+                              <Globe className="w-3.5 h-3.5" />
+                              {entry.ipAddress}
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {filteredEntries.length === 0 && (
-                  <div className="py-12 text-center">
-                    <Search className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mx-auto mb-4" />
-                    <p className="text-neutral-500 dark:text-neutral-400">
-                      No audit entries found
-                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                ))}
+              </div>
 
-          {/* Detail Panel */}
-          <div className="w-96 shrink-0">
-            {selectedEntry ? (
-              <Card>
+              {filteredEntries.length === 0 && (
+                <div className="py-20 text-center">
+                  <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+                  </div>
+                  <h3 className="text-lg font-bold dark:text-white">No results found</h3>
+                  <p className="text-neutral-500 dark:text-neutral-400 mt-1">Try adjusting your filters or search terms.</p>
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Detail Panel */}
+        <div className="lg:col-span-4 space-y-6">
+          {selectedEntry ? (
+            <div className="sticky top-24">
+              <Card className="glass border-primary-500/20 glow-primary-hover transition-all">
                 <CardHeader
-                  title="Entry Details"
-                  subtitle={`ID: ${selectedEntry.id}`}
+                  title="Entry Analysis"
+                  subtitle={`Reference: AX-${selectedEntry.id}092`}
                   action={
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedEntry(null)}>
+                    <Button variant="ghost" size="sm" className="w-8 h-8 p-0" onClick={() => setSelectedEntry(null)}>
                       <XCircle className="w-4 h-4" />
                     </Button>
                   }
                 />
-                <CardContent>
+                <CardBody className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={selectedEntry.status === 'success' ? 'success' : selectedEntry.status === 'failed' ? 'error' : 'warning'}>
+                      {selectedEntry.status.toUpperCase()}
+                    </Badge>
+                    <Badge variant="default">{selectedEntry.type.toUpperCase()}</Badge>
+                  </div>
+
                   <div className="space-y-4">
-                    {/* Type & Status */}
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          selectedEntry.type === 'router'
-                            ? 'info'
-                            : selectedEntry.type === 'ppp'
-                            ? 'success'
-                            : selectedEntry.type === 'policy'
-                            ? 'warning'
-                            : 'default'
-                        }
-                      >
-                        {selectedEntry.type}
-                      </Badge>
-                      <Badge
-                        variant={
-                          selectedEntry.status === 'success'
-                            ? 'success'
-                            : selectedEntry.status === 'failed'
-                            ? 'error'
-                            : 'warning'
-                        }
-                      >
-                        {selectedEntry.status}
-                      </Badge>
-                    </div>
-
-                    {/* Action */}
-                    <div>
-                      <label className="text-xs font-semibold text-neutral-500 uppercase">
-                        Action
-                      </label>
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white mt-1">
-                        {selectedEntry.action}
-                      </p>
-                    </div>
-
-                    {/* Actor */}
-                    <div>
-                      <label className="text-xs font-semibold text-neutral-500 uppercase">
-                        Actor
-                      </label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <User className="w-4 h-4 text-neutral-400" />
-                        <span className="text-sm text-neutral-900 dark:text-white">
-                          {selectedEntry.actor.name}
-                        </span>
-                        <Badge size="sm" variant="default">
-                          {selectedEntry.actor.type}
-                        </Badge>
+                    <div className="p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl space-y-3">
+                      <div>
+                        <label className="text-xs font-bold text-neutral-400 uppercase tracking-tighter">Initiator</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="w-6 h-6 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                            <User className="w-3 h-3 text-primary-600" />
+                          </div>
+                          <span className="text-sm font-medium dark:text-white">{selectedEntry.actor.name}</span>
+                          <span className="text-[10px] bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 rounded uppercase">{selectedEntry.actor.type}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-neutral-400 uppercase tracking-tighter">Affected Resource</label>
+                        <p className="text-sm font-medium text-neutral-900 dark:text-white mt-1 capitalize">
+                          {selectedEntry.resource.type}: {selectedEntry.resource.name}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Resource */}
-                    <div>
-                      <label className="text-xs font-semibold text-neutral-500 uppercase">
-                        Resource
-                      </label>
-                      <p className="text-sm text-neutral-900 dark:text-white mt-1">
-                        {selectedEntry.resource.type}: {selectedEntry.resource.name}
-                      </p>
-                    </div>
-
-                    {/* Changes */}
                     {selectedEntry.changes && selectedEntry.changes.length > 0 && (
                       <div>
-                        <label className="text-xs font-semibold text-neutral-500 uppercase">
-                          Changes
+                        <label className="text-xs font-bold text-neutral-500 uppercase flex items-center gap-2 mb-2">
+                          <RefreshCw className="w-3 h-3" />
+                          Data Transformation
                         </label>
-                        <div className="mt-2 space-y-2">
+                        <div className="space-y-2">
                           {selectedEntry.changes.map((change, idx) => (
-                            <div
-                              key={idx}
-                              className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-lg"
-                            >
-                              <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                                {change.field}
-                              </div>
-                              <div className="flex items-center gap-2 mt-1 text-sm">
-                                <span className="text-error-500 line-through">
+                            <div key={idx} className="p-3 bg-neutral-50 dark:bg-neutral-800/30 rounded-xl border border-neutral-100 dark:border-neutral-800">
+                              <div className="text-xs font-medium text-primary-500 mb-2 truncate">{change.field}</div>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs text-error-500 bg-error-50 dark:bg-error-900/10 px-2 py-1 rounded line-through truncate max-w-[100px]">
                                   {String(change.oldValue)}
                                 </span>
-                                <ArrowDownRight className="w-3 h-3 text-neutral-400" />
-                                <span className="text-success-500 font-medium">
+                                <ArrowRight className="w-3 h-3 text-neutral-400 flex-shrink-0" />
+                                <span className="text-xs text-success-500 bg-success-50 dark:bg-success-900/10 px-2 py-1 rounded font-bold truncate max-w-[100px]">
                                   {String(change.newValue)}
                                 </span>
                               </div>
@@ -495,56 +426,35 @@ export default function AuditTimelinePage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Timestamp */}
-                    <div>
-                      <label className="text-xs font-semibold text-neutral-500 uppercase">
-                        Timestamp
-                      </label>
-                      <p className="text-sm text-neutral-900 dark:text-white mt-1">
-                        {selectedEntry.timestamp.toLocaleString()}
-                      </p>
-                    </div>
-
-                    {/* IP Address */}
-                    {selectedEntry.ipAddress && (
-                      <div>
-                        <label className="text-xs font-semibold text-neutral-500 uppercase">
-                          IP Address
-                        </label>
-                        <p className="text-sm font-mono text-neutral-900 dark:text-white mt-1">
-                          {selectedEntry.ipAddress}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Metadata */}
-                    {selectedEntry.metadata && (
-                      <div>
-                        <label className="text-xs font-semibold text-neutral-500 uppercase">
-                          Metadata
-                        </label>
-                        <pre className="mt-1 p-2 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs overflow-x-auto">
-                          {JSON.stringify(selectedEntry.metadata, null, 2)}
-                        </pre>
-                      </div>
-                    )}
                   </div>
-                </CardContent>
+
+                  <div className="pt-4 border-t border-neutral-100 dark:border-neutral-800 space-y-4">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-neutral-500">Security Hash</span>
+                      <span className="font-mono text-neutral-400 uppercase">SHA256: 3F4D...B2A1</span>
+                    </div>
+                    <Button variant="outline" className="w-full" size="sm" leftIcon={<Eye className="w-4 h-4" />}>
+                      View Compliance Context
+                    </Button>
+                  </div>
+                </CardBody>
               </Card>
-            ) : (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Info className="w-12 h-12 text-neutral-300 dark:text-neutral-600 mx-auto mb-4" />
-                  <p className="text-neutral-500 dark:text-neutral-400">
-                    Select an entry to view details
-                  </p>
-                </CardContent>
+            </div>
+          ) : (
+            <div className="sticky top-24">
+              <Card className="glass border-dashed border-2 flex flex-col items-center justify-center p-12 text-center">
+                <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mb-6">
+                  <Info className="w-8 h-8 text-neutral-400" />
+                </div>
+                <h4 className="font-bold dark:text-white">Forensic Overview</h4>
+                <p className="text-sm text-neutral-500 mt-2 max-w-[200px]">
+                  Select any event from the timeline to perform deep-package inspection and change analysis.
+                </p>
               </Card>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

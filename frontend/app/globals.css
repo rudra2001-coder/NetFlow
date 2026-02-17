@@ -10,11 +10,9 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgb(var(--background-end-rgb))
-  ) rgb(var(--background-start-rgb));
+  background: linear-gradient(to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -64,17 +62,45 @@ body {
 }
 
 /* Status dot colors */
-.bg-status-online { @apply bg-green-500; }
-.bg-status-offline { @apply bg-red-500; }
-.bg-status-degraded { @apply bg-orange-500; }
-.bg-status-maintenance { @apply bg-blue-500; }
-.bg-status-synchronizing { @apply bg-purple-500; }
+.bg-status-online {
+  @apply bg-green-500;
+}
 
-.text-status-online { @apply text-green-500; }
-.text-status-offline { @apply text-red-500; }
-.text-status-degraded { @apply text-orange-500; }
-.text-status-maintenance { @apply text-blue-500; }
-.text-status-synchronizing { @apply text-purple-500; }
+.bg-status-offline {
+  @apply bg-red-500;
+}
+
+.bg-status-degraded {
+  @apply bg-orange-500;
+}
+
+.bg-status-maintenance {
+  @apply bg-blue-500;
+}
+
+.bg-status-synchronizing {
+  @apply bg-purple-500;
+}
+
+.text-status-online {
+  @apply text-green-500;
+}
+
+.text-status-offline {
+  @apply text-red-500;
+}
+
+.text-status-degraded {
+  @apply text-orange-500;
+}
+
+.text-status-maintenance {
+  @apply text-blue-500;
+}
+
+.text-status-synchronizing {
+  @apply text-purple-500;
+}
 
 /* Card styles */
 .card {
@@ -112,9 +138,7 @@ body {
 
 /* Form styles */
 .form-input {
-  @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm 
-         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-         placeholder:text-gray-400 transition-all duration-200;
+  @apply w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 transition-all duration-200;
 }
 
 .form-input:disabled {
@@ -221,8 +245,7 @@ body {
 
 /* Sidebar styles */
 .sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 
-         hover:bg-slate-800 hover:text-white transition-all duration-200;
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200;
 }
 
 .sidebar-link-active {
@@ -231,94 +254,129 @@ body {
 
 /* Animation utilities */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { 
-    transform: translateY(-10px) translateX(10px); 
-    opacity: 0; 
+  from {
+    transform: translateY(-10px) translateX(10px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0) translateX(0); 
-    opacity: 1; 
+
+  to {
+    transform: translateY(0) translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideInRight {
-  from { 
-    transform: translateX(100%); 
-    opacity: 0; 
+  from {
+    transform: translateX(100%);
+    opacity: 0;
   }
-  to { 
-    transform: translateX(0); 
-    opacity: 1; 
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideOutRight {
-  from { 
-    transform: translateX(0); 
-    opacity: 1; 
+  from {
+    transform: translateX(0);
+    opacity: 1;
   }
-  to { 
-    transform: translateX(100%); 
-    opacity: 0; 
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 
 @keyframes slideDown {
-  from { 
-    transform: translateY(-10px); 
-    opacity: 0; 
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes slideUp {
-  from { 
-    transform: translateY(10px); 
-    opacity: 0; 
+  from {
+    transform: translateY(10px);
+    opacity: 0;
   }
-  to { 
-    transform: translateY(0); 
-    opacity: 1; 
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
 @keyframes scaleIn {
-  from { 
-    transform: scale(0.95); 
-    opacity: 0; 
+  from {
+    transform: scale(0.95);
+    opacity: 0;
   }
-  to { 
-    transform: scale(1); 
-    opacity: 1; 
+
+  to {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(-5%); }
-  50% { transform: translateY(0); }
+
+  0%,
+  100% {
+    transform: translateY(-5%);
+  }
+
+  50% {
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Animation classes */
@@ -377,126 +435,88 @@ body {
 
 /* Glass effect */
 .glass {
-  @apply bg-white/80 backdrop-blur-lg;
+  @apply bg-white/70 dark:bg-neutral-900/70 backdrop-blur-md border border-white/20 dark:border-white/10;
 }
 
-/* Chart tooltip */
-.recharts-tooltip-wrapper {
-  @apply outline-none;
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 }
 
-.recharts-default-tooltip {
-  @apply !bg-gray-900 !border-0 !rounded-lg !shadow-xl;
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 20px -5px theme('colors.primary.500');
 }
 
-.recharts-tooltip-label {
-  @apply !text-white font-medium;
+.glow-success {
+  box-shadow: 0 0 20px -5px theme('colors.success.500');
 }
 
-.recharts-tooltip-item {
-  @apply !text-gray-200;
-}
+/* Advanced animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
 
-/* Line clamp utilities */
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+  50% {
+    transform: translateY(-10px);
+  }
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Focus visible utilities */
-.focus-visible {
-  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2;
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  100% {
+    transform: translateY(0px);
   }
 }
 
-/* Touch friendly targets */
-@media (hover: none) and (pointer: coarse) {
-  button,
-  [role="button"],
-  a {
-    min-height: 44px;
-    min-width: 44px;
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes gradient-x {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
   }
 }
 
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  .sidebar-link {
-    @apply border border-white;
-  }
-  
-  .btn {
-    @apply border-2 border-current;
-  }
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 5s ease infinite;
 }
 
-/* Responsive utilities */
-@media (max-width: 640px) {
-  .hide-mobile {
-    display: none;
-  }
+/* Staggered entrance */
+.stagger-1 {
+  animation-delay: 50ms;
 }
 
-@media (min-width: 641px) and (max-width: 1024px) {
-  .hide-tablet {
-    display: none;
-  }
+.stagger-2 {
+  animation-delay: 100ms;
 }
 
-@media (min-width: 1025px) {
-  .hide-desktop {
-    display: none;
-  }
+.stagger-3 {
+  animation-delay: 150ms;
 }
 
-/* Safe area insets for mobile */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .mobile-safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  
-  .mobile-safe-top {
-    padding-top: env(safe-area-inset-top);
-  }
+.stagger-4 {
+  animation-delay: 200ms;
 }
 
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .sidebar,
-  .header {
-    position: static !important;
-    width: auto !important;
-    height: auto !important;
-  }
+/* Dashboard Card Enhancements */
+.stats-card {
+  @apply relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl;
+}
+
+.stats-card::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-white/20 to-transparent pointer-events-none opacity-0 transition-opacity duration-300;
+}
+
+.stats-card:hover::before {
+  @apply opacity-100;
 }

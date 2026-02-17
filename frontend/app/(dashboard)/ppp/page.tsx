@@ -1,14 +1,24 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Play, Pause, RotateCcw, Search, Filter, Download, RefreshCw,
   Clock, Wifi, WifiOff, Upload, Download as DownloadIcon, Users, Activity,
+  MoreVertical, Shield, ChevronRight, Zap, CheckCircle2, Settings, X
 } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Input, Badge, Modal, Table, Select, Progress, Dropdown } from "@/components";
+import {
+  Button, Card, CardBody, CardHeader,
+  Input, Badge, Modal, Select, Progress, Dropdown, Alert
+} from "@/components";
 import { cn } from "@/lib/utils";
+import {
+  AreaChart, Area, ResponsiveContainer, YAxis, XAxis, Tooltip
+} from "recharts";
 
-// Format bytes to human readable
+// ============================================================================
+// Helpers & Types
+// ============================================================================
+
 const formatBytes = (bytes: number): string => {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -17,475 +27,416 @@ const formatBytes = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
-// Format uptime
 const formatUptime = (seconds: number): string => {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
-
-  if (days > 0) return `${days}d ${hours}h ${mins}m`;
-  if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
-  if (mins > 0) return `${mins}m ${secs}s`;
-  return `${secs}s`;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
 };
 
-// Format date
-const formatDate = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleString();
-};
+interface Connection {
+  id: string;
+  name: string;
+  ipAddress: string;
+  macAddress: string;
+  profile: string;
+  uptime: number;
+  bytesIn: number;
+  bytesOut: number;
+  status: "active" | "disabled" | "pending";
+  lastSeen: string;
+  throughput: { time: string; val: number }[];
+}
 
-// Get status badge variant
-const getStatusBadge = (status: string): "success" | "warning" | "error" | "info" | "default" => {
-  const variants: Record<string, "success" | "warning" | "error" | "info" | "default"> = {
-    active: "success",
-    pending: "warning",
-    disabled: "default",
-    expired: "error",
-  };
-  return variants[status] || "info";
-};
+// ============================================================================
+// Mock Data
+// ============================================================================
+
+const mockConnections: Connection[] = [
+  {
+    id: "PPP_001",
+    name: "rudra.isp",
+    ipAddress: "10.10.20.55",
+    macAddress: "FC:A1:EE:22:90:01",
+    profile: "Ultra_Speed_100M",
+    uptime: 86400 * 2.5,
+    bytesIn: 1024 * 1024 * 1024 * 12,
+    bytesOut: 1024 * 1024 * 1024 * 45,
+    status: "active",
+    lastSeen: "Just now",
+    throughput: Array.from({ length: 10 }, (_, i) => ({ time: `${i}s`, val: Math.random() * 80 + 20 }))
+  },
+  {
+    id: "PPP_002",
+    name: "office.main",
+    ipAddress: "10.10.20.102",
+    macAddress: "FC:A1:EE:22:90:02",
+    profile: "Business_Premium",
+    uptime: 12400,
+    bytesIn: 1024 * 1024 * 850,
+    bytesOut: 1024 * 1024 * 1024 * 2.1,
+    status: "active",
+    lastSeen: "2m ago",
+    throughput: Array.from({ length: 10 }, (_, i) => ({ time: `${i}s`, val: Math.random() * 40 + 10 }))
+  },
+  {
+    id: "PPP_003",
+    name: "guest.lounge",
+    ipAddress: "10.10.20.215",
+    macAddress: "FC:A1:EE:22:90:03",
+    profile: "Guest_Access_5M",
+    uptime: 0,
+    bytesIn: 0,
+    bytesOut: 0,
+    status: "disabled",
+    lastSeen: "3 hours ago",
+    throughput: []
+  }
+];
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function PPPPage() {
-  // State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedConnections, setSelectedConnections] = useState<string[]>([]);
-  const [showActionsModal, setShowActionsModal] = useState(false);
-  const [actionType, setActionType] = useState<"start" | "stop" | "restart">("start");
-  const [actionLoading, setActionLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [actionConnectionId, setActionConnectionId] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showBulkPackageModal, setShowBulkPackageModal] = useState(false);
+  const [actionType, setActionType] = useState<"enable" | "disable" | "restart" | "paid" | "sync">("enable");
+  const [newPackage, setNewPackage] = useState("");
 
-  // Mock data
-  const connections = [
-    {
-      id: "1",
-      name: "john.doe",
-      ipAddress: "10.0.1.100",
-      macAddress: "AA:BB:CC:DD:EE:01",
-      profile: " Residential-10Mbps",
-      uptime: 86400 * 5 + 3600 * 3,
-      bytesIn: 1024 * 1024 * 1024 * 15.5,
-      bytesOut: 1024 * 1024 * 1024 * 45.2,
-      connectionCount: 1,
-      lastActivity: Date.now() - 300000,
-      status: "active",
-      comment: "Home user - Package 1",
-    },
-    {
-      id: "2",
-      name: "jane.smith",
-      ipAddress: "10.0.1.101",
-      macAddress: "AA:BB:CC:DD:EE:02",
-      profile: "Business-50Mbps",
-      uptime: 86400 * 12 + 3600 * 8,
-      bytesIn: 1024 * 1024 * 1024 * 45.8,
-      bytesOut: 1024 * 1024 * 1024 * 120.3,
-      connectionCount: 3,
-      lastActivity: Date.now() - 60000,
-      status: "active",
-      comment: "Office user",
-    },
-    {
-      id: "3",
-      name: "bob.wilson",
-      ipAddress: "10.0.1.102",
-      macAddress: "AA:BB:CC:DD:EE:03",
-      profile: "Residential-5Mbps",
-      uptime: 0,
-      bytesIn: 0,
-      bytesOut: 0,
-      connectionCount: 0,
-      lastActivity: Date.now() - 86400000 * 3,
-      status: "disabled",
-      comment: "Payment pending",
-    },
-    {
-      id: "4",
-      name: "alice.johnson",
-      ipAddress: "10.0.1.103",
-      macAddress: "AA:BB:CC:DD:EE:04",
-      profile: "Residential-20Mbps",
-      uptime: 86400 * 2 + 3600 * 5,
-      bytesIn: 1024 * 1024 * 1024 * 8.2,
-      bytesOut: 1024 * 1024 * 1024 * 25.6,
-      connectionCount: 2,
-      lastActivity: Date.now() - 180000,
-      status: "active",
-      comment: "",
-    },
-    {
-      id: "5",
-      name: "charlie.brown",
-      ipAddress: "10.0.1.104",
-      macAddress: "AA:BB:CC:DD:EE:05",
-      profile: "VIP-100Mbps",
-      uptime: 86400 * 30 + 3600 * 12,
-      bytesIn: 1024 * 1024 * 1024 * 500.5,
-      bytesOut: 1024 * 1024 * 1024 * 1024 * 1.2,
-      connectionCount: 1,
-      lastActivity: Date.now() - 10000,
-      status: "active",
-      comment: "VIP customer",
-    },
-  ];
+  const filteredConnections = useMemo(() => {
+    return mockConnections.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.ipAddress.includes(searchQuery);
+      const matchesStatus = statusFilter === "all" || c.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchQuery, statusFilter]);
 
-  const totalActive = connections.filter((c) => c.status === "active").length;
-  const totalBandwidth = connections.reduce((acc, c) => acc + c.bytesIn + c.bytesOut, 0);
+  const activeCount = mockConnections.filter(c => c.status === "active").length;
 
-  // Filter connections
-  const filteredConnections = connections.filter((conn) => {
-    const matchesSearch =
-      conn.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conn.ipAddress.includes(searchQuery) ||
-      conn.profile.toLowerCase().includes(searchQuery.toLowerCase());
+  const handleBulkAction = (type: typeof actionType) => {
+    setActionType(type);
+    setShowConfirmModal(true);
+  };
 
-    const matchesStatus = statusFilter === "all" || conn.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleConnectionAction = useCallback(
-    (connectionId: string, action: "start" | "stop" | "restart") => {
-      setActionConnectionId(connectionId);
-      setActionType(action);
-      setShowActionsModal(true);
-    },
-    []
-  );
-
-  const handleBulkAction = useCallback(
-    (action: "start" | "stop" | "restart") => {
-      if (selectedConnections.length === 0) return;
-      setActionType(action);
-      setShowActionsModal(true);
-    },
-    [selectedConnections]
-  );
-
-  const confirmAction = useCallback(async () => {
-    setActionLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setActionLoading(false);
-    setShowActionsModal(false);
-    setSelectedConnections([]);
-  }, []);
-
-  const toggleConnectionSelection = useCallback((id: string) => {
-    setSelectedConnections((prev) =>
-      prev.includes(id) ? prev.filter((connId) => connId !== id) : [...prev, id]
-    );
-  }, []);
-
-  const toggleSelectAll = useCallback(() => {
-    if (selectedConnections.length === filteredConnections.length) {
-      setSelectedConnections([]);
-    } else {
-      setSelectedConnections(filteredConnections.map((c) => c.id));
-    }
-  }, [filteredConnections, selectedConnections.length]);
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 animate-fadeIn pb-32">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">PPP Connections</h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Manage PPPoE and PPTP connections
-          </p>
+          <h1 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
+            <Shield className="w-7 h-7 text-primary-500" />
+            PPP Command Center
+          </h1>
+          <p className="text-sm text-neutral-500 font-medium tracking-tight">Enterprise tunnel orchestration and real-time session management.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            leftIcon={<RefreshCw className="w-4 h-4" />}
-            onClick={() => {}}
-          >
-            Refresh
-          </Button>
-          <Button leftIcon={<Download className="w-4 h-4" />}>Export CSV</Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="rounded-2xl h-11 px-6 border-0 glass shadow-lg font-bold" leftIcon={<RefreshCw className="w-4 h-4" />}>Force Refresh</Button>
+          <Button className="rounded-2xl h-11 px-6 shadow-xl shadow-primary-500/20 bg-primary-600 font-black" leftIcon={<Activity className="w-4 h-4" />}>Live Monitor</Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardBody className="py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                <Users className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-              </div>
+      {/* Stats Overlays */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="glass border-0 shadow-xl overflow-hidden group">
+          <CardBody className="p-6">
+            <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm text-neutral-500">Total Connections</p>
-                <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-                  {connections.length}
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Active Tunnels</p>
+                <h3 className="text-4xl font-black text-neutral-900 dark:text-white">{activeCount}</h3>
+                <Badge variant="success" className="mt-2 rounded-full px-2 text-[10px]">Healthy Performance</Badge>
+              </div>
+              <div className="p-4 bg-primary-500/10 rounded-2xl text-primary-500 group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6" />
               </div>
             </div>
           </CardBody>
         </Card>
-        <Card>
-          <CardBody className="py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-success-100 dark:bg-success-900/30 rounded-lg">
-                <Wifi className="w-5 h-5 text-success-600 dark:text-success-400" />
-              </div>
-              <div>
-                <p className="text-sm text-neutral-500">Active</p>
-                <p className="text-2xl font-bold text-success-600">{totalActive}</p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="py-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-info-100 dark:bg-info-900/30 rounded-lg">
-                <Activity className="w-5 h-5 text-info-600 dark:text-info-400" />
-              </div>
-              <div>
-                <p className="text-sm text-neutral-500">Total Traffic</p>
-                <p className="text-2xl font-bold text-info-600">{formatBytes(totalBandwidth)}</p>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
 
-      {/* Filters */}
-      <Card>
-        <CardBody>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search connections..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search className="w-4 h-4" />}
-              />
+        <Card className="glass border-0 shadow-xl overflow-hidden group">
+          <CardBody className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-1">Total Throughput</p>
+                <h3 className="text-4xl font-black text-neutral-900 dark:text-white">1.2 GB/s</h3>
+                <div className="flex items-center gap-1 text-[10px] font-bold text-success-600 mt-2">
+                  <Zap className="w-3 h-3" />
+                  Peak Load Detected
+                </div>
+              </div>
+              <div className="p-4 bg-purple-500/10 rounded-2xl text-purple-500 group-hover:scale-110 transition-transform">
+                <Activity className="w-6 h-6" />
+              </div>
             </div>
-            <div className="w-full sm:w-48">
-              <Select
-                value={statusFilter}
-                onChange={(value) => setStatusFilter(value)}
-                options={[
-                  { value: "all", label: "All Status" },
-                  { value: "active", label: "Active" },
-                  { value: "pending", label: "Pending" },
-                  { value: "disabled", label: "Disabled" },
-                  { value: "expired", label: "Expired" },
-                ]}
-              />
+          </CardBody>
+        </Card>
+
+        <Card className="glass border-0 shadow-xl overflow-hidden bg-neutral-900 text-white relative">
+          <CardBody className="p-6 relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Service SLA</p>
+            <h3 className="text-4xl font-black mb-1">99.98%</h3>
+            <p className="text-[10px] font-bold opacity-80 uppercase tracking-tighter">Enterprise Uptime Guaranteed</p>
+            <div className="mt-4 flex gap-1">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-5 w-1.5 rounded-full bg-success-500" />
+              ))}
+              <div className="h-5 w-1.5 rounded-full bg-neutral-700" />
             </div>
+          </CardBody>
+          <div className="absolute right-0 bottom-0 p-4 opacity-5">
+            <Clock className="w-24 h-24" />
           </div>
-        </CardBody>
+        </Card>
+      </div>
+
+      {/* Filter Toolbar */}
+      <Card className="glass border-0 shadow-lg overflow-hidden">
+        <div className="p-4 flex flex-col md:flex-row gap-4 items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/10">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Input
+              placeholder="Search by identity or IP..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 border-0 bg-white dark:bg-neutral-800 shadow-sm rounded-2xl h-12"
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Select
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: "all", label: "All Status" },
+                { value: "active", label: "Active" },
+                { value: "disabled", label: "Disabled" },
+                { value: "pending", label: "Pending" },
+              ]}
+              className="w-full md:w-44"
+            />
+            <Button variant="outline" className="h-12 w-12 p-0 rounded-2xl border-0 glass shadow-lg"><Filter className="w-4 h-4" /></Button>
+            <Button variant="outline" className="h-12 w-12 p-0 rounded-2xl border-0 glass shadow-lg"><Download className="w-4 h-4" /></Button>
+          </div>
+        </div>
       </Card>
 
-      {/* Bulk Actions */}
-      {selectedConnections.length > 0 && (
-        <Card className="bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800">
-          <CardBody className="py-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                {selectedConnections.length} connection(s) selected
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Play className="w-3 h-3" />}
-                  onClick={() => handleBulkAction("start")}
-                >
-                  Enable
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Pause className="w-3 h-3" />}
-                  onClick={() => handleBulkAction("stop")}
-                >
-                  Disable
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<RotateCcw className="w-3 h-3" />}
-                  onClick={() => handleBulkAction("restart")}
-                >
-                  Restart
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedConnections([])}
-                >
-                  Clear Selection
-                </Button>
-              </div>
+      {/* Bulk Actions Floating Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slideUp">
+          <div className="glass shadow-2xl rounded-[2rem] px-8 py-4 flex items-center gap-8 border border-primary-500/30 backdrop-blur-3xl bg-white/80 dark:bg-neutral-900/80">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-primary-500 uppercase tracking-widest">Selection</span>
+              <span className="text-sm font-black text-neutral-900 dark:text-white">{selectedIds.length} Nodes</span>
             </div>
-          </CardBody>
-        </Card>
+            <div className="h-10 w-[1px] bg-neutral-200 dark:bg-neutral-700" />
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="ghost" className="hover:bg-success-50 dark:hover:bg-success-900/20 text-success-600 rounded-xl px-4" onClick={() => handleBulkAction("paid")} leftIcon={<CheckCircle2 className="w-4 h-4" />}>Mark Paid</Button>
+              <Button size="sm" variant="ghost" className="hover:bg-primary-50 dark:hover:bg-primary-900/20 text-primary-600 rounded-xl px-4" onClick={() => setShowBulkPackageModal(true)} leftIcon={<Settings className="w-4 h-4" />}>Change Plan</Button>
+              <Button size="sm" variant="ghost" className="hover:bg-info-50 dark:hover:bg-info-900/20 text-info-600 rounded-xl px-4" onClick={() => handleBulkAction("sync")} leftIcon={<RefreshCw className="w-4 h-4" />}>Sync Router</Button>
+
+              <div className="w-[1px] h-6 bg-neutral-200 dark:bg-neutral-700 mx-2" />
+
+              <Button size="sm" variant="ghost" className="hover:text-error-600 rounded-xl" onClick={() => handleBulkAction("disable")}><Pause className="w-4 h-4" /></Button>
+            </div>
+            <Button size="sm" variant="ghost" className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white" onClick={() => setSelectedIds([])}>Dismiss</Button>
+          </div>
+        </div>
       )}
 
-      {/* Connections Table */}
-      <Card>
-        <CardHeader title="PPP Connections" subtitle={`${filteredConnections.length} connections found`} />
-        <CardBody className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-neutral-200 dark:border-neutral-700">
-                  <th className="px-4 py-3 w-12">
-                    <input
-                      type="checkbox"
-                      className="rounded border-neutral-300"
-                      checked={
-                        selectedConnections.length === filteredConnections.length &&
-                        filteredConnections.length > 0
-                      }
-                      onChange={toggleSelectAll}
-                    />
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">IP Address</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Profile</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Uptime</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Traffic (In/Out)</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Last Activity</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredConnections.map((conn) => (
-                  <tr
-                    key={conn.id}
-                    className="border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
-                  >
-                    <td className="px-4 py-4">
-                      <input
-                        type="checkbox"
-                        className="rounded border-neutral-300"
-                        checked={selectedConnections.includes(conn.id)}
-                        onChange={() => toggleConnectionSelection(conn.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-4">
-                      <Badge variant={getStatusBadge(conn.status)} size="sm">
-                        {conn.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div>
-                        <p className="font-medium text-neutral-900 dark:text-white">{conn.name}</p>
-                        <p className="text-sm text-neutral-500">{conn.macAddress}</p>
+      {/* Connections Grid */}
+      <div className="grid grid-cols-1 gap-4">
+        {filteredConnections.map((conn) => (
+          <Card key={conn.id} className={cn(
+            "glass border-0 shadow-lg group relative overflow-hidden transition-all duration-500",
+            selectedIds.includes(conn.id) ? "ring-2 ring-primary-500 bg-primary-50/10 dark:bg-primary-900/5" : "hover:shadow-2xl hover:-translate-y-1"
+          )}>
+            <CardBody className="p-0">
+              <div className="flex flex-col lg:flex-row">
+                {/* Session Identity */}
+                <div className="p-6 lg:w-1/4 border-r border-neutral-100 dark:border-neutral-800 flex flex-col justify-center">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-xl shadow-primary-500/20 group-hover:scale-110 transition-transform">
+                      <Wifi className="w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-black text-neutral-900 dark:text-white truncate">{conn.name}</h4>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(conn.id)}
+                          onChange={() => toggleSelect(conn.id)}
+                          className="w-4 h-4 rounded-lg border-neutral-300 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                        />
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <code className="text-sm bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded">
-                        {conn.ipAddress}
-                      </code>
-                    </td>
-                    <td className="px-4 py-4 text-neutral-600 dark:text-neutral-300">{conn.profile}</td>
-                    <td className="px-4 py-4">
-                      {conn.status === "active" ? (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-neutral-400" />
-                          <span>{formatUptime(conn.uptime)}</span>
-                        </div>
-                      ) : (
-                        <span className="text-neutral-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1 text-sm">
-                        <Upload className="w-4 h-4 text-success-500" />
-                        <span>{formatBytes(conn.bytesIn)}</span>
-                        <span className="text-neutral-400">/</span>
-                        <DownloadIcon className="w-4 h-4 text-info-500" />
-                        <span>{formatBytes(conn.bytesOut)}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-neutral-500">
-                      {formatDate(conn.lastActivity)}
-                    </td>
-                    <td className="px-4 py-4 text-right">
-                      <Dropdown
-                        trigger={
-                          <button className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg">
-                            <Activity className="w-4 h-4" />
-                          </button>
-                        }
-                        items={[
-                          {
-                            label: "Enable",
-                            icon: <Play className="w-4 h-4" />,
-                            onClick: () => handleConnectionAction(conn.id, "start"),
-                            disabled: conn.status === "active",
-                          },
-                          {
-                            label: "Disable",
-                            icon: <Pause className="w-4 h-4" />,
-                            onClick: () => handleConnectionAction(conn.id, "stop"),
-                            disabled: conn.status !== "active",
-                          },
-                          { label: "Restart", icon: <RotateCcw className="w-4 h-4" />, onClick: () => handleConnectionAction(conn.id, "restart") },
-                          { label: "View Details", icon: <Search className="w-4 h-4" /> },
-                          { label: "Edit", icon: <Activity className="w-4 h-4" /> },
-                        ]}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardBody>
-      </Card>
+                      <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{conn.ipAddress}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-black">
+                      <span className="text-neutral-400 uppercase">Profile Plan</span>
+                      <span className="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-0.5 rounded-md">{conn.profile}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px] font-black">
+                      <span className="text-neutral-400 uppercase">Active Time</span>
+                      <span className="text-neutral-700 dark:text-neutral-300 tabular-nums">{conn.uptime > 0 ? formatUptime(conn.uptime) : "-"}</span>
+                    </div>
+                  </div>
+                </div>
 
-      {/* Action Confirmation Modal */}
+                {/* Live Throughput Viz */}
+                <div className="p-6 lg:w-1/3 border-r border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/10 flex flex-col justify-center">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Live Traffic Viz</span>
+                    <Badge variant={conn.status === "active" ? "success" : "default"} size="sm" className="font-black uppercase">{conn.status}</Badge>
+                  </div>
+                  <div className="h-20 w-full">
+                    {conn.throughput.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={conn.throughput}>
+                          <defs>
+                            <linearGradient id={`colorVal-${conn.id}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <Area
+                            type="monotone"
+                            dataKey="val"
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            fillOpacity={1}
+                            fill={`url(#colorVal-${conn.id})`}
+                            isAnimationActive={false}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-2xl bg-white/50 dark:bg-black/20">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Link Inactive</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Traffic Stats */}
+                <div className="p-6 lg:w-1/4 border-r border-neutral-100 dark:border-neutral-800 flex flex-col justify-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-4">Session Statistics</span>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-success-600 mb-1">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">TX</span>
+                      </div>
+                      <p className="text-sm font-black tabular-nums">{formatBytes(conn.bytesIn)}</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5 text-blue-600 mb-1">
+                        <DownloadIcon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">RX</span>
+                      </div>
+                      <p className="text-sm font-black tabular-nums">{formatBytes(conn.bytesOut)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-neutral-400">Identity</span>
+                    <span className="text-neutral-600 dark:text-neutral-400">{conn.macAddress}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="p-6 lg:flex-1 flex items-center justify-center lg:justify-end gap-2">
+                  <button
+                    className="h-11 w-11 rounded-2xl bg-success-50 dark:bg-success-900/10 text-success-600 flex items-center justify-center hover:bg-success-500 hover:text-white transition-all shadow-sm"
+                    title="Process Payment"
+                  >
+                    <Play className="w-4 h-4" />
+                  </button>
+                  <Button variant="ghost" size="sm" className="h-11 w-11 p-0 rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                    <Pause className="w-4 h-4 text-neutral-500" />
+                  </Button>
+                  <Dropdown
+                    trigger={<Button variant="ghost" size="sm" className="h-11 w-11 p-0 rounded-2xl hover:bg-neutral-100 dark:hover:bg-neutral-800"><MoreVertical className="w-5 h-5" /></Button>}
+                    items={[
+                      { label: "Restart Tunnel Session", icon: <RotateCcw className="w-4 h-4" /> },
+                      { label: "Edit Service Profile", icon: <Settings className="w-4 h-4" /> },
+                      { label: "Router Sync Status", icon: <RefreshCw className="w-4 h-4" /> },
+                      { label: "Force Terminate", icon: <X className="w-4 h-4" />, danger: true },
+                    ]}
+                  />
+                  <Button variant="ghost" size="sm" className="h-11 px-4 rounded-2xl group-hover:bg-neutral-900 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-black transition-all">
+                    <ChevronRight className="w-6 h-6" />
+                  </Button>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      {/* Confirmation Modal */}
       <Modal
-        isOpen={showActionsModal}
-        onClose={() => !actionLoading && setShowActionsModal(false)}
-        title={
-          actionType === "start"
-            ? "Enable Connection(s)"
-            : actionType === "stop"
-            ? "Disable Connection(s)"
-            : "Restart Connection(s)"
-        }
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Command Execution"
         size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setShowActionsModal(false)} disabled={actionLoading}>
-              Cancel
-            </Button>
-            <Button
-              variant={actionType === "stop" ? "danger" : "primary"}
-              onClick={confirmAction}
-              loading={actionLoading}
-            >
-              {actionType === "start"
-                ? "Enable"
-                : actionType === "stop"
-                ? "Disable"
-                : "Restart"}
-            </Button>
-          </>
-        }
       >
-        <div className="space-y-4">
-          <p className="text-neutral-600 dark:text-neutral-300">
-            Are you sure you want to {actionType} the selected connection
-            {selectedConnections.length > 1 ? "s" : ""}?
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl border border-neutral-100 dark:border-neutral-700">
+            <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-neutral-400 uppercase tracking-widest">Protocol Action</p>
+              <p className="text-sm font-black dark:text-white uppercase italic">{actionType}</p>
+            </div>
+          </div>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
+            Confirm execution for <span className="font-black text-primary-600">{selectedIds.length} active nodes</span>? This action will be logged in the administrative audit vault.
           </p>
-          {selectedConnections.length > 1 && (
-            <p className="text-sm text-neutral-500">
-              {selectedConnections.length} connection(s) will be affected.
-            </p>
-          )}
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1 h-12 rounded-2xl font-bold" onClick={() => setShowConfirmModal(false)}>Cancel</Button>
+            <Button className="flex-1 h-12 rounded-2xl font-black bg-primary-600" onClick={() => setShowConfirmModal(false)}>Authorize</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Package Modal */}
+      <Modal
+        isOpen={showBulkPackageModal}
+        onClose={() => setShowBulkPackageModal(false)}
+        title="Core Package Migration"
+        size="md"
+      >
+        <div className="space-y-6">
+          <Alert variant="warning" title="Critical Migration">
+            Changing profiles for multiple users will trigger a session restart and router sync for all selected nodes.
+          </Alert>
+
+          <Select
+            label="Target Service Profile"
+            value={newPackage}
+            onChange={setNewPackage}
+            options={[
+              { value: "10m", label: "Value Pack (10Mbps)" },
+              { value: "50m", label: "Pro Gamer (50Mbps)" },
+              { value: "100m", label: "Ultra Fiber (100Mbps)" },
+              { value: "corp", label: "Executive Dedication" },
+            ]}
+          />
+
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1 h-12 rounded-2xl font-bold" onClick={() => setShowBulkPackageModal(false)}>Abort</Button>
+            <Button className="flex-1 h-12 rounded-2xl font-black bg-primary-600" onClick={() => setShowBulkPackageModal(false)}>Start Migration</Button>
+          </div>
         </div>
       </Modal>
     </div>
