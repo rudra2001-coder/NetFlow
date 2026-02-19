@@ -617,8 +617,233 @@ export const userDataUsage = pgTable('user_data_usage', {
 }));
 
 // ============================================================================
-// TYPE EXPORTS
+// RESELLER TYPES (for multi-level hierarchy)
 // ============================================================================
+
+export const resellerRoleEnum = pgEnum('reseller_role', [
+  'admin',      // Top-level (main ISP admin)
+  'macro',       // Macro reseller (first level)
+  'reseller',    // Regular reseller
+  'sub_reseller' // Sub-reseller (any level below)
+]);
+
+export const commissionTypeEnum = pgEnum('commission_type', [
+  'percentage', // Percentage of sale
+  'fixed',      // Fixed amount per sale
+  'margin'      // Margin-based (difference between buy/sell)
+]);
+
+export const transactionTypeEnum = pgEnum('transaction_type', [
+  'credit',           // Funds added to wallet
+  'debit',            // Funds deducted
+  'commission_earned', // Commission received
+  'commission_paid',  // Commission paid to parent
+  'package_sale',     // Package sale revenue
+  'package_cost',     // Package cost to parent
+  'refund',           // Refund issued
+  'adjustment'        // Manual adjustment
+]);
+
+export const resellerStatusEnum = pgEnum('reseller_status', [
+  'active',
+  'suspended',
+  'inactive',
+  'pending'
+]);
+
+// ============================================================================
+// RESELLERS (Hierarchical structure with unlimited depth)
+// ============================================================================
+
+export const resellers = pgTable('resellers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Link to user account
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Hierarchy - self-referencing (parent_id = null means top-level macro)
+  parentId: uuid('parent_id'),
+  
+  // Reseller details
+  name: varchar('name', { length: 255 }).notNull(),
+  companyName: varchar('company_name', { length: 255 }),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 50 }),
+  address: text('address'),
+  
+  // Role in hierarchy
+  role: resellerRoleEnum('role').default('reseller').notNull(),
+  level: integer('level').default(1), // 1 = macro, 2 = sub, 3 = sub-sub, etc.
+  
+  // Commission settings
+  commissionType: commissionTypeEnum('commission_type').default('percentage'),
+  commissionValue: numeric('commission_value', { precision: 5, scale: 2 }).default('0'), // percentage or fixed amount
+  marginPercent: numeric('margin_percent', { precision: 5, scale: 2 }).default('0'), // for margin-based commission
+  
+  // Fund dependency control
+  fundDependencyEnabled: boolean('fund_dependency_enabled').default(true).notNull(),
+  creditLimit: numeric('credit_limit', { precision: 10, scale: 2 }).default('0'), // Allow negative balance up to this limit
+  
+  // Wallet balance
+  walletBalance: numeric('wallet_balance', { precision: 12, scale: 2 }).default('0').notNull(),
+  
+  // Status
+  status: resellerStatusEnum('status').default('pending').notNull(),
+  
+  // Settings
+  settings: jsonb('settings').default({}),
+  
+  // Metadata
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  resellerOrgIdx: index('reseller_org_idx').on(table.organizationId),
+  resellerParentIdx: index('reseller_parent_idx').on(table.parentId),
+  resellerUserIdx: index('reseller_user_idx').on(table.userId),
+  resellerStatusIdx: index('reseller_status_idx').on(table.status),
+}));
+
+// ============================================================================
+// RESELLER WALLET TRANSACTIONS (Ledger)
+// ============================================================================
+
+export const resellerTransactions = pgTable('reseller_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  resellerId: uuid('reseller_id').references(() => resellers.id, { onDelete: 'cascade' }).notNull(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Transaction details
+  type: transactionTypeEnum('type').notNull(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  balanceBefore: numeric('balance_before', { precision: 12, scale: 2 }).notNull(),
+  balanceAfter: numeric('balance_after', { precision: 12, scale: 2 }).notNull(),
+  
+  // Reference (for linking to related entities)
+  referenceType: varchar('reference_type', { length: 50 }), // e.g., 'package_sale', 'commission', 'deposit'
+  referenceId: uuid('reference_id'),
+  
+  // Related reseller (for commission transactions)
+  relatedResellerId: uuid('related_reseller_id'),
+  
+  // Description
+  description: text('description'),
+  notes: text('notes'),
+  
+  // Metadata
+  ipAddress: inet('ip_address'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  transactionResellerIdx: index('transaction_reseller_idx').on(table.resellerId),
+  transactionOrgIdx: index('transaction_org_idx').on(table.organizationId),
+  transactionTypeIdx: index('transaction_type_idx').on(table.type),
+  transactionRefIdx: index('transaction_ref_idx').on(table.referenceType, table.referenceId),
+}));
+
+// ============================================================================
+// RESELLER COMMISSION RULES (Per package/plan)
+// ============================================================================
+
+export const resellerCommissions = pgTable('reseller_commissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  resellerId: uuid('reseller_id').references(() => resellers.id, { onDelete: 'cascade' }).notNull(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  
+  // Package/plan reference
+  billingPlanId: uuid('billing_plan_id').references(() => billingPlans.id, { onDelete: 'cascade' }),
+  
+  // Commission settings for this specific plan
+  commissionType: commissionTypeEnum('commission_type').default('percentage'),
+  commissionValue: numeric('commission_value', { precision: 5, scale: 2 }).notNull(),
+  
+  // Optional cap
+  maxCommission: numeric('max_commission', { precision: 10, scale: 2 }),
+  minCommission: numeric('min_commission', { precision: 10, scale: 2 }).default('0'),
+  
+  // Active
+  isActive: boolean('is_active').default(true).notNull(),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  commissionResellerIdx: index('commission_reseller_idx').on(table.resellerId),
+  commissionPlanIdx: index('commission_plan_idx').on(table.billingPlanId),
+}));
+
+// ============================================================================
+// RESELLER HIERARCHY VIEW (For quick tree queries)
+// ============================================================================
+
+export const resellerHierarchy = pgTable('reseller_hierarchy', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ancestorId: uuid('ancestor_id').references(() => resellers.id, { onDelete: 'cascade' }).notNull(),
+  descendantId: uuid('descendant_id').references(() => resellers.id, { onDelete: 'cascade' }).notNull(),
+  depth: integer('depth').notNull(), // 0 = self, 1 = direct child, 2 = grandchild, etc.
+}, (table) => ({
+  hierarchyAncestorIdx: index('hierarchy_ancestor_idx').on(table.ancestorId),
+  hierarchyDescendantIdx: index('hierarchy_descendant_idx').on(table.descendantId),
+}));
+
+// ============================================================================
+// RELATIONS
+// ============================================================================
+
+export const resellersRelations = relations(resellers, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [resellers.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, {
+    fields: [resellers.userId],
+    references: [users.id],
+  }),
+  parent: one(resellers, {
+    fields: [resellers.parentId],
+    references: [resellers.id],
+    relationName: 'parent_reseller',
+  }),
+  children: many(resellers, {
+    relationName: 'child_resellers',
+  }),
+  transactions: many(resellerTransactions),
+  commissions: many(resellerCommissions),
+}));
+
+export const resellerTransactionsRelations = relations(resellerTransactions, ({ one }) => ({
+  reseller: one(resellers, {
+    fields: [resellerTransactions.resellerId],
+    references: [resellers.id],
+  }),
+  relatedReseller: one(resellers, {
+    fields: [resellerTransactions.relatedResellerId],
+    references: [resellers.id],
+  }),
+}));
+
+export const resellerCommissionsRelations = relations(resellerCommissions, ({ one }) => ({
+  reseller: one(resellers, {
+    fields: [resellerCommissions.resellerId],
+    references: [resellers.id],
+  }),
+  billingPlan: one(billingPlans, {
+    fields: [resellerCommissions.billingPlanId],
+    references: [billingPlans.id],
+  }),
+}));
+
+export const resellerHierarchyRelations = relations(resellerHierarchy, ({ one }) => ({
+  ancestor: one(resellers, {
+    fields: [resellerHierarchy.ancestorId],
+    references: [resellers.id],
+    relationName: 'ancestor_reseller',
+  }),
+  descendant: one(resellers, {
+    fields: [resellerHierarchy.descendantId],
+    references: [resellers.id],
+    relationName: 'descendant_reseller',
+  }),
+}));
 
 export type Organization = InferSelectModel<typeof organizations>;
 export type NewOrganization = InferInsertModel<typeof organizations>;
@@ -639,3 +864,11 @@ export type PppUsageLog = InferSelectModel<typeof pppUsageLogs>;
 export type UserDataUsage = InferSelectModel<typeof userDataUsage>;
 export type BillingPlan = InferSelectModel<typeof billingPlans>;
 export type Invoice = InferSelectModel<typeof invoices>;
+
+// Reseller types
+export type Reseller = InferSelectModel<typeof resellers>;
+export type NewReseller = InferInsertModel<typeof resellers>;
+export type ResellerTransaction = InferSelectModel<typeof resellerTransactions>;
+export type NewResellerTransaction = InferInsertModel<typeof resellerTransactions>;
+export type ResellerCommission = InferSelectModel<typeof resellerCommissions>;
+export type NewResellerCommission = InferInsertModel<typeof resellerCommissions>;
