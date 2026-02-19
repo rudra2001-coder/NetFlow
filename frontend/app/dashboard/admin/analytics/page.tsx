@@ -4,66 +4,72 @@ import React, { useState, useMemo } from "react";
 import {
   TrendingUp, TrendingDown, Activity, Wifi, Users, Clock,
   Calendar, Filter, Download, RefreshCw, BarChart3, LineChart as LineChartIcon,
-  Server
+  Server, Cpu, Database, Zap, ArrowUpRight, DollarSign, PieChart,
+  ChevronRight, MoreVertical, Globe, Shield, Settings
 } from "lucide-react";
-import { Button, Card, CardBody, CardHeader, Select, Tabs, Badge } from "@/components";
+import {
+  Button, Card, CardBody, CardHeader,
+  Select, Tabs, Badge, Progress, Dropdown
+} from "@/components";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
+  PieChart as RechartsPie, Pie, Cell
 } from "recharts";
 import { cn } from "@/lib/utils";
 
-// Mock data
+// ============================================================================
+// Pro-Level Mock Data
+// ============================================================================
+
 const trafficData = [
-  { time: "00:00", inbound: 120, outbound: 80 },
-  { time: "04:00", inbound: 80, outbound: 50 },
-  { time: "08:00", inbound: 450, outbound: 320 },
-  { time: "12:00", inbound: 680, outbound: 520 },
-  { time: "16:00", inbound: 890, outbound: 720 },
-  { time: "20:00", inbound: 750, outbound: 580 },
-  { time: "23:59", inbound: 320, outbound: 240 },
+  { time: "00:00", inbound: 120, outbound: 80, latency: 12 },
+  { time: "04:00", inbound: 80, outbound: 50, latency: 10 },
+  { time: "08:00", inbound: 450, outbound: 320, latency: 18 },
+  { time: "12:00", inbound: 680, outbound: 520, latency: 25 },
+  { time: "16:00", inbound: 890, outbound: 720, latency: 30 },
+  { time: "20:00", inbound: 750, outbound: 580, latency: 22 },
+  { time: "23:59", inbound: 320, outbound: 240, latency: 15 },
 ];
 
-const userGrowthData = [
-  { month: "Jan", ppp: 450, hotspot: 120 },
-  { month: "Feb", ppp: 520, hotspot: 180 },
-  { month: "Mar", ppp: 610, hotspot: 250 },
-  { month: "Apr", ppp: 720, hotspot: 340 },
-  { month: "May", ppp: 850, hotspot: 420 },
-  { month: "Jun", ppp: 980, hotspot: 510 },
+const revenueTrend = [
+  { date: "Mon", cash: 4500, mfs: 8200, forecast: 11000 },
+  { date: "Tue", cash: 3800, mfs: 9100, forecast: 11500 },
+  { date: "Wed", cash: 5200, mfs: 7800, forecast: 12000 },
+  { date: "Thu", cash: 6100, mfs: 11200, forecast: 13500 },
+  { date: "Fri", cash: 4900, mfs: 12400, forecast: 15000 },
+  { date: "Sat", cash: 7200, mfs: 15600, forecast: 21000 },
+  { date: "Sun", cash: 8500, mfs: 16800, forecast: 24000 },
 ];
 
-const bandwidthByService = [
-  { name: "Web Browsing", value: 35 },
-  { name: "Video Streaming", value: 28 },
-  { name: "Social Media", value: 15 },
-  { name: "Gaming", value: 12 },
-  { name: "File Sharing", value: 7 },
-  { name: "Other", value: 3 },
+const hardwareStats = [
+  { name: "CPU Load", value: 42, color: "#3b82f6", icon: <Cpu className="w-4 h-4" /> },
+  { name: "Memory", value: 68, color: "#8b5cf6", icon: <Database className="w-4 h-4" /> },
+  { name: "Disk Usage", value: 25, color: "#10b981", icon: <Server className="w-4 h-4" /> },
 ];
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState("7d");
-  const [activeTab, setActiveTab] = useState("traffic");
-
-  const stats = useMemo(() => ({
-    totalTraffic: "45.2 TB",
-    avgBandwidth: "156 Mbps",
-    peakUsers: 1247,
-    growth: "+12.5%",
-  }), []);
+  const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 animate-fadeIn pb-20">
+      {/* Command Center Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Analytics</h1>
-          <p className="text-neutral-500 dark:text-neutral-400 mt-1">
-            Network performance and usage analytics
+          <h1 className="text-3xl font-black text-neutral-900 dark:text-white flex items-center gap-3">
+            <Activity className="w-8 h-8 text-primary-500" />
+            Analytics Command Center
+          </h1>
+          <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mt-1 max-w-xl tracking-tight">
+            Aggregated network intelligence, financial forecasting, and global systems health monitoring.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Select
             value={dateRange}
             onChange={setDateRange}
@@ -71,355 +77,325 @@ export default function AnalyticsPage() {
               { value: "24h", label: "Last 24 Hours" },
               { value: "7d", label: "Last 7 Days" },
               { value: "30d", label: "Last 30 Days" },
-              { value: "90d", label: "Last 90 Days" },
             ]}
+            className="w-44"
           />
-          <Button variant="outline" leftIcon={<RefreshCw className="w-4 h-4" />}>
-            Refresh
-          </Button>
-          <Button variant="outline" leftIcon={<Download className="w-4 h-4" />}>
-            Export
-          </Button>
+          <div className="flex bg-neutral-100 dark:bg-neutral-800 p-1 rounded-2xl shadow-inner">
+            <Button size="sm" variant="ghost" className="rounded-xl px-4">Live</Button>
+            <Button size="sm" className="rounded-xl px-4 shadow-sm bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white">Trend</Button>
+          </div>
+          <Button variant="outline" className="rounded-2xl h-11 h-11 w-11 p-0 border-0 glass shadow-lg"><Download className="w-4 h-4" /></Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardBody>
+      {/* Performance Ticker Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {hardwareStats.map((stat, i) => (
+          <Card key={i} className="glass border-0 shadow-lg group hover:-translate-y-1 transition-all duration-300">
+            <CardBody className="p-4 py-3 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-neutral-800 shadow-sm text-neutral-400 group-hover:text-primary-500 transition-colors">
+                {stat.icon}
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-end mb-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-neutral-500">{stat.name}</span>
+                  <span className="text-sm font-black dark:text-white">{stat.value}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                    style={{ width: `${stat.value}%` }}
+                  />
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+        <Card className="glass border-0 shadow-lg bg-primary-600 text-white overflow-hidden relative group">
+          <CardBody className="p-4 py-3 relative z-10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-neutral-500">Total Traffic</p>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">{stats.totalTraffic}</p>
-                <p className="text-xs text-success-600 mt-1 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> +8.2% from last period
-                </p>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Uptime Score</p>
+                <h4 className="text-2xl font-black italic">99.99%</h4>
               </div>
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-xl">
-                <Wifi className="w-6 h-6 text-primary-600" />
-              </div>
+              <Zap className="w-6 h-6 opacity-30 group-hover:scale-125 transition-transform" />
             </div>
           </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-500">Avg Bandwidth</p>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">{stats.avgBandwidth}</p>
-                <p className="text-xs text-neutral-400 mt-1">Peak: 890 Mbps</p>
-              </div>
-              <div className="p-3 bg-info-100 dark:bg-info-900/30 rounded-xl">
-                <Activity className="w-6 h-6 text-info-600" />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-500">Peak Users</p>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">{stats.peakUsers.toLocaleString()}</p>
-                <p className="text-xs text-neutral-400 mt-1">Concurrently online</p>
-              </div>
-              <div className="p-3 bg-success-100 dark:bg-success-900/30 rounded-xl">
-                <Users className="w-6 h-6 text-success-600" />
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-neutral-500">User Growth</p>
-                <p className="text-3xl font-bold text-success-600">{stats.growth}</p>
-                <p className="text-xs text-neutral-400 mt-1">Monthly growth rate</p>
-              </div>
-              <div className="p-3 bg-warning-100 dark:bg-warning-900/30 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-warning-600" />
-              </div>
-            </div>
-          </CardBody>
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
         </Card>
       </div>
 
-      {/* Tabs */}
+      {/* Core Visualization Engine */}
       <Tabs
         tabs={[
           {
-            id: "traffic",
-            label: "Traffic Analysis",
-            content: <TrafficAnalysis />,
+            id: "overview",
+            label: "Core Overview",
+            content: <ExecutiveOverview />,
           },
           {
-            id: "users",
-            label: "User Growth",
-            content: <UserGrowth />,
+            id: "revenue",
+            label: "Revenue Hub",
+            content: <RevenueHub />,
           },
           {
-            id: "sessions",
-            label: "Sessions",
-            content: <SessionsAnalysis />,
+            id: "monitoring",
+            label: "Online Monitoring",
+            content: <LiveMonitoring />,
           },
           {
-            id: "services",
-            label: "Services",
-            content: <ServicesAnalysis />,
+            id: "software",
+            label: "Software Performace",
+            content: <SoftwarePerformance />,
           },
         ]}
-        defaultTab="traffic"
+        defaultTab="overview"
         onChange={setActiveTab}
+        className="mt-6"
       />
     </div>
   );
 }
 
-function SessionsAnalysis() {
-  const sessionData = [
-    { hour: "00:00", active: 850 },
-    { hour: "04:00", active: 420 },
-    { hour: "08:00", active: 1100 },
-    { hour: "12:00", active: 2450 },
-    { hour: "16:00", active: 3100 },
-    { hour: "20:00", active: 1800 },
-    { hour: "23:59", active: 950 },
-  ];
+// ============================================================================
+// Tab Components
+// ============================================================================
 
-  const authTrendData = [
-    { time: "08:00", success: 120, fail: 5 },
-    { time: "10:00", success: 340, fail: 12 },
-    { time: "12:00", success: 560, fail: 25 },
-    { time: "14:00", success: 420, fail: 18 },
-    { time: "16:00", success: 680, fail: 30 },
-    { time: "18:00", success: 510, fail: 15 },
-    { time: "20:00", success: 290, fail: 8 },
-  ];
-
-  const liveSessions = [
-    { id: "SES-991", user: "mac-00:25:96:FF:21:44", type: "Hotspot", duration: "2h 15m", usage: "1.2 GB", ip: "10.5.50.122", node: "RTR-HQ-01" },
-    { id: "SES-992", user: "user_pppoe_77", type: "PPP", duration: "14h 22m", usage: "8.5 GB", ip: "172.16.10.45", node: "RTR-BRANCH-02" },
-    { id: "SES-993", user: "mac-64:D1:54:11:88:90", type: "Hotspot", duration: "0h 12m", usage: "156 MB", ip: "10.5.50.156", node: "RTR-HQ-01" },
-    { id: "SES-994", user: "support_test_acct", type: "PPP", duration: "1h 05m", usage: "450 MB", ip: "172.16.10.98", node: "RTR-CORE-01" },
-  ];
-
+function ExecutiveOverview() {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Session Concurrency */}
-        <Card className="lg:col-span-2 glass border-0 shadow-xl overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fadeIn">
+      <Card className="lg:col-span-2 glass border-0 shadow-2xl overflow-hidden min-h-[450px]">
+        <CardHeader
+          title="Real-time Network Velocity"
+          subtitle="Aggregated throughput and global latency spikes"
+          action={<Badge variant="info" className="rounded-full px-3 py-1 font-black animate-pulse">LIVE FEED</Badge>}
+        />
+        <CardBody className="p-6">
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trafficData}>
+                <defs>
+                  <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
+                <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(229, 231, 235, 0.5)",
+                    borderRadius: "16px",
+                    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="inbound"
+                  stroke="#3b82f6"
+                  strokeWidth={4}
+                  fillOpacity={1}
+                  fill="url(#colorInbound)"
+                  name="Inbound Traffic"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </CardBody>
+      </Card>
+
+      <div className="space-y-6">
+        <Card className="glass border-0 shadow-xl overflow-hidden relative">
+          <CardBody className="p-6">
+            <p className="text-xs font-black uppercase tracking-widest text-neutral-400 mb-2">Network Health</p>
+            <div className="space-y-4">
+              {[
+                { label: "Packet Loss", val: "0.02%", status: "Optimal" },
+                { label: "Jitter", val: "4ms", status: "Clean" },
+                { label: "DNS Latency", val: "18ms", status: "Good" }
+              ].map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-3.5 bg-white dark:bg-neutral-800/50 rounded-2xl shadow-sm border border-neutral-50 dark:border-neutral-700/50">
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter">{item.label}</p>
+                    <p className="text-lg font-black dark:text-white leading-tight">{item.val}</p>
+                  </div>
+                  <Badge variant="success" size="sm" className="rounded-full px-2">{item.status}</Badge>
+                </div>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className="glass border-0 shadow-xl bg-gradient-to-br from-neutral-900 to-black text-white p-6 relative overflow-hidden group">
+          <div className="relative z-10">
+            <TrendingUp className="w-8 h-8 text-primary-500 mb-4 group-hover:scale-110 transition-transform" />
+            <h4 className="text-sm font-black uppercase tracking-widest opacity-60 mb-1">Growth Index</h4>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black">+24.8%</span>
+              <span className="text-xs font-bold text-success-500 flex items-center gap-0.5">
+                <ArrowUpRight className="w-3 h-3" />
+                Week
+              </span>
+            </div>
+            <p className="text-[10px] font-medium opacity-50 mt-4 leading-relaxed">System-wide scalability trending upwards based on concurrent session influx.</p>
+          </div>
+          <div className="absolute right-[-20px] bottom-[-20px] opacity-10 group-hover:opacity-20 transition-opacity">
+            <Activity className="w-32 h-32" />
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function RevenueHub() {
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <Card className="lg:col-span-3 glass border-0 shadow-2xl min-h-[450px]">
           <CardHeader
-            title="Session Concurrency"
-            subtitle="Active concurrent sessions over 24 hours"
+            title="Revenue Matrix & Projections"
+            subtitle="Consolidated cash flow vs digital payments (MFS)"
           />
-          <CardBody>
-            <div className="h-64">
+          <CardBody className="p-6">
+            <div className="h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sessionData}>
-                  <defs>
-                    <linearGradient id="colorSessionActive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.8} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.2} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={revenueTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
-                  <XAxis dataKey="hour" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                  <XAxis dataKey="date" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
                   <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "rgba(255, 255, 255, 0.9)",
                       backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(229, 231, 235, 0.5)",
                       borderRadius: "16px",
                       boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
                     }}
-                    cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
                   />
-                  <Bar dataKey="active" fill="url(#colorSessionActive)" radius={[6, 6, 0, 0]} barSize={40} />
+                  <Bar dataKey="cash" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} barSize={40} />
+                  <Bar dataKey="mfs" stackId="a" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40} />
+                  <Line type="monotone" dataKey="forecast" stroke="#f59e0b" strokeWidth={3} strokeDasharray="5 5" dot={false} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardBody>
         </Card>
 
-        {/* Quick Session Stats */}
-        <div className="flex flex-col gap-4">
-          <Card className="glass border-0 shadow-lg flex-1 group hover:scale-[1.02] transition-transform duration-300">
-            <CardBody className="flex flex-col justify-center h-full">
-              <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg w-fit mb-3 text-primary-600 group-hover:rotate-12 transition-transform">
-                <Clock className="w-5 h-5" />
+        <div className="space-y-4">
+          <Card className="glass border-0 shadow-lg p-6 bg-gradient-to-br from-success-500 to-success-600 text-white">
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-70">Projected Monthly</p>
+            <h3 className="text-3xl font-black mt-1">$45.2K</h3>
+            <div className="flex items-center gap-1.5 mt-3 text-[10px] font-bold">
+              <div className="p-1 rounded-full bg-white/20">
+                <TrendingUp className="w-3 h-3" />
               </div>
-              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Avg Session Duration</span>
-              <span className="text-3xl font-black dark:text-white">4h 12m</span>
-              <div className="mt-2 flex items-center gap-2 text-success-600 font-medium">
-                <TrendingUp className="w-4 h-4" />
-                <span className="text-sm">+15% vs last week</span>
-              </div>
-            </CardBody>
-          </Card>
-          <Card className="glass border-0 shadow-lg flex-1 group hover:scale-[1.02] transition-transform duration-300">
-            <CardBody className="flex flex-col justify-center h-full">
-              <div className="p-2 bg-success-100 dark:bg-success-900/30 rounded-lg w-fit mb-3 text-success-600 group-hover:rotate-12 transition-transform">
-                <Users className="w-5 h-5" />
-              </div>
-              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">Total Auth Attempts</span>
-              <span className="text-3xl font-black dark:text-white">12,450</span>
-              <div className="mt-2 flex items-center gap-2 text-neutral-500 font-medium font-mono">
-                <Activity className="w-4 h-4 text-primary-500" />
-                <span className="text-sm">99.1% Success Rate</span>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Auth Trend Chart */}
-        <Card className="glass border-0 shadow-xl">
-          <CardHeader
-            title="Authentication Trend"
-            subtitle="Hourly success vs failure attempts"
-          />
-          <CardBody>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={authTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
-                  <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      backdropFilter: "blur(12px)",
-                      border: "1px solid rgba(229, 231, 235, 0.5)",
-                      borderRadius: "16px",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="success"
-                    stroke="#22c55e"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: "#22c55e", strokeWidth: 2, stroke: "#fff" }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="fail"
-                    stroke="#ef4444"
-                    strokeWidth={3}
-                    strokeDasharray="5 5"
-                    dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "#fff" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              Target: Above 12%
             </div>
-            <div className="mt-4 flex justify-center gap-6">
-              <div className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                <div className="w-3 h-3 rounded-full bg-success-500" /> Success
-              </div>
-              <div className="flex items-center gap-2 text-xs font-medium text-neutral-500">
-                <div className="w-3 h-1 border-t-2 border-dashed border-error-500" /> Failures
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Device Distribution */}
-        <Card className="glass border-0 shadow-xl">
-          <CardHeader
-            title="Device Distribution"
-            subtitle="Client hardware breakdown"
-          />
-          <CardBody>
-            <div className="space-y-6 pt-4">
+          </Card>
+          <Card className="glass border-0 shadow-lg p-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4">Payment Splitting</p>
+            <div className="space-y-4">
               {[
-                { brand: "Android Devices", count: 480, total: 950, color: "bg-success-500", icon: <TrendingUp className="w-4 h-4 text-success-600" /> },
-                { brand: "iOS / Apple", count: 320, total: 950, color: "bg-primary-500", icon: <TrendingUp className="w-4 h-4 text-primary-600" /> },
-                { brand: "Windows Desktop", count: 110, total: 950, color: "bg-info-500", icon: <TrendingDown className="w-4 h-4 text-info-600" /> },
-                { brand: "Other / IoT", count: 40, total: 950, color: "bg-neutral-400", icon: <Activity className="w-4 h-4 text-neutral-500" /> },
-              ].map((item, i) => (
-                <div key={i} className="group">
-                  <div className="flex justify-between items-end mb-2">
-                    <div>
-                      <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{item.brand}</p>
-                      <p className="text-xs text-neutral-500 font-mono">{item.count} Active</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-black text-neutral-800 dark:text-neutral-200">{Math.round((item.count / item.total) * 100)}%</p>
-                    </div>
+                { label: "Digital Wallet", val: 65, color: "bg-primary-500" },
+                { label: "Manual Invoicing", val: 25, color: "bg-purple-500" },
+                { label: "On-site Cash", val: 10, color: "bg-neutral-300" }
+              ].map((p, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-[11px] font-black mb-1.5 uppercase tracking-tighter">
+                    <span>{p.label}</span>
+                    <span>{p.val}%</span>
                   </div>
-                  <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${item.color} transition-all duration-1000 ease-out group-hover:brightness-110`}
-                      style={{ width: `${(item.count / item.total) * 100}%` }}
-                    />
+                  <div className="h-2 w-full bg-neutral-100 dark:bg-neutral-800 rounded-full">
+                    <div className={cn("h-full rounded-full", p.color)} style={{ width: `${p.val}%` }} />
                   </div>
                 </div>
               ))}
             </div>
-          </CardBody>
-        </Card>
+          </Card>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Live Sessions Table */}
-      <Card className="glass overflow-hidden border-0 shadow-2xl">
+function LiveMonitoring() {
+  const liveNodes = [
+    { name: "Core-Router-Alpha", status: "online", load: 24, throughput: "1.2 Gbps", node: "Headquarters" },
+    { name: "Branch-Edge-01", status: "online", load: 45, throughput: "450 Mbps", node: "New York" },
+    { name: "Public-Hotspot-G03", status: "warning", load: 88, throughput: "85 Mbps", node: "Retail Wing" },
+    { name: "Backup-Gateway-X", status: "idle", load: 2, throughput: "0 Mbps", node: "Data Center" },
+  ];
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      <Card className="glass border-0 shadow-2xl overflow-hidden">
         <CardHeader
-          title="Live Sessions"
-          subtitle="Real-time connectivity monitoring across all gateways"
-          action={
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" leftIcon={<Filter className="w-4 h-4" />}>Filter</Button>
-              <Button size="sm" className="bg-primary-600 hover:bg-primary-700">Refresh List</Button>
-            </div>
-          }
+          title="Real-time Node Monitoring"
+          subtitle="Live throughput and load balancing status across all POPs"
+          action={<Button size="sm" variant="outline" leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>Refresh Pulse</Button>}
         />
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-neutral-50/50 dark:bg-neutral-800/30">
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">User / Identifier</th>
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Gateway</th>
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Duration</th>
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider">Usage</th>
-                <th className="px-6 py-4 text-xs font-bold text-neutral-400 uppercase tracking-wider text-right">Actions</th>
+              <tr className="bg-neutral-50/50 dark:bg-neutral-800/50 text-[10px] font-black uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800">
+                <th className="px-6 py-4">Node Identity</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Resource Load</th>
+                <th className="px-6 py-4">Current Throughput</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {liveSessions.map((session) => (
-                <tr key={session.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-neutral-900 dark:text-white text-sm">{session.user}</div>
-                    <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{session.ip}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant={session.type === 'PPP' ? 'ppp' : 'default'} pppStatus={session.type === 'PPP' ? 'active' : undefined}>
-                      {session.type}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-                      <Server className="w-3.5 h-3.5" />
-                      {session.node}
+              {liveNodes.map((node, i) => (
+                <tr key={i} className="group hover:bg-neutral-50/70 dark:hover:bg-neutral-800/30 transition-all">
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110",
+                        node.status === 'online' ? "bg-primary-500 shadow-primary-500/20 text-white" : "bg-neutral-200 dark:bg-neutral-700 text-neutral-500"
+                      )}>
+                        <Server className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black dark:text-white leading-tight">{node.name}</p>
+                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-tighter mt-1">{node.node}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{session.duration}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-primary-600">{session.usage}</span>
+                  <td className="px-6 py-5">
+                    <Badge variant={node.status === 'online' ? 'success' : node.status === 'warning' ? 'warning' : 'default'}>
+                      {node.status}
+                    </Badge>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-error-500 hover:bg-error-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      Disconnect
-                    </Button>
+                  <td className="px-6 py-5">
+                    <div className="w-32">
+                      <div className="flex justify-between text-[10px] font-black mb-1.5 text-neutral-500 uppercase">
+                        <span>CPU Load</span>
+                        <span>{node.load}%</span>
+                      </div>
+                      <div className="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-1000",
+                            node.load > 80 ? "bg-error-500" : node.load > 50 ? "bg-warning-500" : "bg-success-500"
+                          )}
+                          style={{ width: `${node.load}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
+                    <span className="text-sm font-black text-primary-500">{node.throughput}</span>
+                  </td>
+                  <td className="px-6 py-5 text-right">
+                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-white dark:hover:bg-neutral-700 shadow-sm"><Activity className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-white dark:hover:bg-neutral-700 shadow-sm"><Settings className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-primary-500 hover:text-white transition-all"><ChevronRight className="w-5 h-5" /></Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -431,234 +407,50 @@ function SessionsAnalysis() {
   );
 }
 
-function TrafficAnalysis() {
+function SoftwarePerformance() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader title="Traffic Over Time" subtitle="Inbound vs outbound traffic" />
-        <CardBody>
-          <div className="h-80">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+      <Card className="glass border-0 shadow-xl overflow-hidden min-h-[400px]">
+        <CardHeader title="System Efficiency" subtitle="Internal processing delays and response times" />
+        <CardBody className="p-6">
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficData}>
-                <defs>
-                  <linearGradient id="colorInbound" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorOutbound" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} tickFormatter={(v) => `${v} Mbps`} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                  }}
-                  formatter={(value: number) => [`${value} Mbps`]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="inbound"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorInbound)"
-                  name="Inbound"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="outbound"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorOutbound)"
-                  name="Outbound"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Protocol Distribution" subtitle="Traffic by protocol type" />
-        <CardBody>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trafficData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Bar dataKey="inbound" fill="#3b82f6" radius={[4, 4, 0, 0]} name="TCP" />
-                <Bar dataKey="outbound" fill="#22c55e" radius={[4, 4, 0, 0]} name="UDP" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-  );
-}
-
-function UserGrowth() {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader title="User Growth" subtitle="PPP vs Hotspot users" />
-        <CardBody>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={userGrowthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="ppp"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ fill: "#3b82f6", strokeWidth: 2 }}
-                  name="PPP Users"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="hotspot"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  dot={{ fill: "#22c55e", strokeWidth: 2 }}
-                  name="Hotspot Users"
-                />
+              <LineChart data={trafficData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
+                <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip />
+                <Line type="monotone" dataKey="latency" stroke="#8b5cf6" strokeWidth={4} dot={{ r: 6, fill: "#8b5cf6", strokeWidth: 2, stroke: "#fff" }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader title="User Retention" subtitle="Monthly retention rate" />
-        <CardBody>
-          <div className="space-y-4">
-            {[
-              { month: "January", rate: 92, change: "+2%" },
-              { month: "February", rate: 89, change: "-3%" },
-              { month: "March", rate: 94, change: "+5%" },
-              { month: "April", rate: 91, change: "-3%" },
-              { month: "May", rate: 96, change: "+5%" },
-              { month: "June", rate: 93, change: "-3%" },
-            ].map((item) => (
-              <div key={item.month} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-neutral-400" />
-                  <span className="font-medium text-neutral-900 dark:text-white">{item.month}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-32 h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary-500 rounded-full"
-                      style={{ width: `${item.rate}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium w-12">{item.rate}%</span>
-                  <span className={cn(
-                    "text-xs font-medium",
-                    item.change.startsWith("+") ? "text-success-600" : "text-error-600"
-                  )}>
-                    {item.change}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-  );
-}
-
-function ServicesAnalysis() {
-  const COLORS = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#8b5cf6", "#6b7280"];
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader title="Bandwidth by Service" subtitle="Top applications by bandwidth usage" />
-        <CardBody>
-          <div className="space-y-4">
-            {bandwidthByService.map((service, index) => (
-              <div key={service.name} className="flex items-center gap-4">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: COLORS[index] }}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-neutral-900 dark:text-white">
-                      {service.name}
-                    </span>
-                    <span className="text-sm text-neutral-500">{service.value}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${service.value}%`,
-                        backgroundColor: COLORS[index],
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Peak Hours" subtitle="User activity by hour of day" />
-        <CardBody>
-          <div className="h-80">
+      <Card className="glass border-0 shadow-xl overflow-hidden min-h-[400px]">
+        <CardHeader title="Error Distribution" subtitle="API response health and fault frequency" />
+        <CardBody className="p-6 flex items-center justify-center">
+          <div className="h-72 w-72 relative">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+              <h4 className="text-3xl font-black mb-0">99.8%</h4>
+              <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400">Success Rate</p>
+            </div>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trafficData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} />
-                <YAxis stroke="#9ca3af" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="inbound"
-                  stroke="#8b5cf6"
-                  strokeWidth={2}
-                  fill="#8b5cf6"
-                  fillOpacity={0.3}
-                  name="Active Users"
-                />
-              </AreaChart>
+              <RechartsPie>
+                <Pie
+                  data={[
+                    { name: 'Success', value: 998 },
+                    { name: 'Faults', value: 2 }
+                  ]}
+                  innerRadius={80}
+                  outerRadius={110}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  <Cell fill="#3b82f6" fillOpacity={0.8} />
+                  <Cell fill="#ef4444" fillOpacity={0.8} />
+                </Pie>
+              </RechartsPie>
             </ResponsiveContainer>
           </div>
         </CardBody>

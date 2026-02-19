@@ -9,6 +9,7 @@ import pgConnectionString from 'pg-connection-string';
 import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import * as schema from './schema.js';
+import * as schemaEnterprise from './schema.enterprise.js';
 
 // Prepare database connection options
 const dbOptions = {
@@ -30,7 +31,7 @@ export const pool = new Pool({
 
 // Initialize Drizzle ORM
 export const db = drizzle(pool, {
-  schema,
+  schema: { ...schema, ...schemaEnterprise },
   logger: config.NODE_ENV === 'development',
 });
 

@@ -23,6 +23,7 @@ import authRoutes from './routes/auth.js';
 import routerRoutes from './routes/routers.js';
 import pppRoutes from './routes/ppp.js';
 import dashboardRoutes from './routes/dashboard.js';
+import { oltRoutes } from './routes/olts.js';
 
 // ============================================================================
 // APP FACTORY
@@ -181,6 +182,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(routerRoutes, { prefix: '/api/v1/routers' });
   await app.register(pppRoutes, { prefix: '/api/v1/ppp' });
   await app.register(dashboardRoutes, { prefix: '/api/v1/dashboard' });
+  await app.register(oltRoutes, { prefix: '/api/v1/olts' });
 
   // Root endpoint
   app.get('/', async (request, reply) => {

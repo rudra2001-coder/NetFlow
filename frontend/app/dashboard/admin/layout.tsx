@@ -151,13 +151,34 @@ const navigationItems: NavItem[] = [
     href: '/reports',
   },
   {
+    id: 'hr',
+    label: 'HR & Payroll',
+    icon: <Users className="w-5 h-5 text-purple-500" />,
+    children: [
+      { id: 'hr-payroll', label: 'Payroll Hub', icon: <CreditCard className="w-4 h-4" />, href: '/hr/payroll' },
+      { id: 'hr-process', label: 'Processing Hub', icon: <Zap className="w-4 h-4" />, href: '/hr/process' },
+      { id: 'hr-directory', label: 'Employee Catalog', icon: <UserCog className="w-4 h-4" />, href: '/hr/directory' },
+      { id: 'hr-salary', label: 'Salary Matrix', icon: <Tag className="w-4 h-4" />, href: '/hr/salary' },
+    ],
+  },
+  {
+    id: 'support-group',
+    label: 'Support & Tickets',
+    icon: <HelpCircle className="w-5 h-5 text-indigo-500" />,
+    children: [
+      { id: 'support-dash', label: 'Support Pulse', icon: <Activity className="w-4 h-4" />, href: '/support' },
+      { id: 'support-tickets', label: 'Ticket Hub', icon: <FileText className="w-4 h-4" />, href: '/support/tickets' },
+      { id: 'support-performance', label: 'Staff Analytics', icon: <BarChart3 className="w-4 h-4" />, href: '/support/performance' },
+    ],
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: <Settings className="w-5 h-5" />,
     children: [
-      { id: 'system', label: 'System', icon: <Settings className="w-4 h-4" />, href: '/settings/system' },
-      { id: 'users-settings', label: 'User Management', icon: <UserCog className="w-4 h-4" />, href: '/settings/users' },
-      { id: 'integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, href: '/settings/integrations' },
+      { id: 'system', label: 'System Governance', icon: <Shield className="w-4 h-4" />, href: '/settings/system' },
+      { id: 'users-settings', label: 'Staff Directory', icon: <UserCog className="w-4 h-4" />, href: '/settings/users' },
+      { id: 'integrations', label: 'Integrations Hub', icon: <Plug className="w-4 h-4" />, href: '/settings/integrations' },
     ],
   },
 ];
@@ -331,8 +352,13 @@ function Sidebar({
           ))}
         </nav>
 
-        {/* User Section */}
-        <div className="p-4 border-t border-neutral-200 dark:border-neutral-800">
+        <div
+          className={cn(
+            'p-4 border-t border-neutral-200 dark:border-neutral-800 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors',
+            collapsed && 'justify-center'
+          )}
+          onClick={() => onNavigate('/profile')}
+        >
           <div className={cn(
             'flex items-center gap-3',
             collapsed && 'justify-center'
@@ -365,12 +391,14 @@ function Header({
   showNotifications,
   setShowNotifications,
   acknowledgeAlert,
+  onProfileClick,
 }: {
   onMenuClick: () => void;
   notifications: Alert[];
   showNotifications: boolean;
   setShowNotifications: (show: boolean) => void;
   acknowledgeAlert: (id: string) => void;
+  onProfileClick: () => void;
 }) {
   const criticalCount = notifications.filter(n => n.severity === 'critical' && !n.acknowledged).length;
 
@@ -478,7 +506,14 @@ function Header({
         </div>
 
         {/* User Menu */}
-        <button className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+        <button
+          onClick={() => {
+            // we use the router from the parent component indirectly or via a custom event
+            // but since layout is a client component, we can use a callback passed to Header
+            onProfileClick();
+          }}
+          className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+        >
           <User className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
         </button>
       </div>
@@ -557,6 +592,7 @@ export default function DashboardLayout({
         showNotifications={showNotifications}
         setShowNotifications={setShowNotifications}
         acknowledgeAlert={acknowledgeAlert}
+        onProfileClick={() => handleNavigate('/profile')}
       />
 
       <main
