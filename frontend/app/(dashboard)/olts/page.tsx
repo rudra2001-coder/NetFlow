@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Plus, Users } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -294,6 +295,28 @@ export default function OltDashboard() {
                 Add OLT
               </Link>
             )}
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-2 overflow-x-auto">
+              <a href="/olts" className="px-4 py-2 text-gray-900 font-semibold border-b-2 border-blue-600 text-blue-600">
+                <svg className="inline-block w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
+                Management
+              </a>
+              <a href="/olts/new" className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 transition-colors">
+                <Plus className="inline-block w-4 h-4 mr-2" />
+                Add OLT
+              </a>
+              <a href="/olts/users" className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:border-b-2 hover:border-gray-300 transition-colors">
+                <Users className="inline-block w-4 h-4 mr-2" />
+                OLT Users
+              </a>
+            </div>
           </div>
         </div>
       </div>

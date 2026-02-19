@@ -739,6 +739,44 @@ export const billingEvents = pgTable('billing_events', {
 }));
 
 // ============================================================================
+// PAYMENTS
+// ============================================================================
+
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  resellerId: uuid('reseller_id').references(() => resellers.id, { onDelete: 'set null' }),
+  invoiceId: uuid('invoice_id').references(() => invoices.id, { onDelete: 'set null' }),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  method: varchar('method', { length: 50 }),
+  reference: varchar('reference', { length: 200 }),
+  status: varchar('status', { length: 50 }).default('completed'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  paymentOrgIdx: index('payment_org_idx').on(table.organizationId),
+  paymentInvoiceIdx: index('payment_invoice_idx').on(table.invoiceId),
+}));
+
+// ============================================================================
+// EXPENSES
+// ============================================================================
+
+export const expenses = pgTable('expenses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  category: varchar('category', { length: 100 }),
+  vendor: varchar('vendor', { length: 255 }),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  notes: text('notes'),
+  occurredAt: timestamp('occurred_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  expenseOrgIdx: index('expense_org_idx').on(table.organizationId),
+  expenseCategoryIdx: index('expense_category_idx').on(table.category),
+}));
+
+// ============================================================================
 // TRAFFIC METRICS (TimescaleDB Hypertable)
 // ============================================================================
 

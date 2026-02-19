@@ -71,7 +71,8 @@ export const PageLayout = ({
         <Header
           {...headerProps}
           sidebarCollapsed={sidebarCollapsed}
-          sidebarWidth={sidebarCollapsed ? "w-20" : "w-64"}
+          // pass header left-offset class (used for fixed header positioning)
+          sidebarWidth={sidebarCollapsed ? "left-20" : "left-64"}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode(!darkMode)}
           isSidebarOpen={isSidebarOpen}
