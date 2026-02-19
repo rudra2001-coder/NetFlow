@@ -62,6 +62,8 @@ export {
 export { Sidebar } from "./layout/Sidebar";
 export { Header } from "./layout/Header";
 export { PageLayout } from "./layout/PageLayout";
+export { RightSidebar } from "./layout/RightSidebar";
+export { QuickSettingsDrawer, QuickSettingsToggle } from "./layout/QuickSettingsDrawer";
 
 // Search
 export { QuickSearch } from "./ui/QuickSearch";

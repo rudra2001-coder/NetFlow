@@ -10,7 +10,7 @@ import {
   Search, Home, Folder, FolderOpen, Tag, Zap, AlertTriangle,
   CheckCircle, Clock, TrendingUp, TrendingDown, MoreHorizontal,
   LogOut, User, Sun, Moon, Globe, RefreshCw, HelpCircle,
-  Play,
+  Play, Building2,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -114,10 +114,16 @@ const navigationItems: NavItem[] = [
     ],
   },
   {
+    id: 'resellers',
+    label: 'Resellers',
+    icon: <Building2 className="w-5 h-5" />,
+    href: '/dashboard/admin/resellers',
+  },
+  {
     id: 'billing',
     label: 'Billing',
     icon: <CreditCard className="w-5 h-5" />,
-    href: '/billing',
+    href: '/dashboard/admin/billing',
   },
   {
     id: 'analytics',

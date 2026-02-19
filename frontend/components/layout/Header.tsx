@@ -13,10 +13,12 @@ import {
   ChevronDown,
   Menu,
   X,
+  ChevronRight,
 } from "lucide-react";
 import { Avatar } from "../ui/Avatar";
 import { DropdownItem } from "../ui/Dropdown";
 import { QuickSettingsDrawer, QuickSettingsToggle } from "./QuickSettingsDrawer";
+import { RightSidebar } from "./RightSidebar";
 
 export interface HeaderProps {
   user?: {
@@ -61,6 +63,7 @@ export const Header = ({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showQuickSettings, setShowQuickSettings] = useState(false);
+  const [showRightSidebar, setShowRightSidebar] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -149,6 +152,28 @@ export const Header = ({
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
+            {/* Right Sidebar Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowRightSidebar(!showRightSidebar)}
+              className={`
+                p-2.5 rounded-xl
+                transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+                ${showRightSidebar
+                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700/50"
+                }
+              `}
+              aria-label={showRightSidebar ? "Close quick settings panel" : "Open quick settings panel"}
+              aria-expanded={showRightSidebar}
+            >
+              <ChevronRight
+                size={20}
+                className={`transition-transform duration-300 ${showRightSidebar ? "rotate-180" : ""}`}
+              />
+            </button>
+
             {/* Quick Settings Toggle */}
             <QuickSettingsToggle
               isOpen={showQuickSettings}
@@ -382,6 +407,15 @@ export const Header = ({
         onToggle={() => setShowQuickSettings(!showQuickSettings)}
         darkMode={darkMode}
         onToggleDarkMode={onToggleDarkMode}
+      />
+
+      {/* Right Sidebar */}
+      <RightSidebar
+        isOpen={showRightSidebar}
+        onToggle={() => setShowRightSidebar(!showRightSidebar)}
+        darkMode={darkMode}
+        onToggleDarkMode={onToggleDarkMode}
+        notifications={true}
       />
     </>
   );
