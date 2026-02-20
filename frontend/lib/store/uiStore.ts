@@ -145,6 +145,8 @@ export const defaultRolePermissions: Record<UserRole, RolePermissions> = {
       'billing:read',
       'billing:update',
       'invoices:*',
+      'olts:*',
+      'accounting:read',
       'analytics:read',
       'reports:*',
       'settings:*',
@@ -154,6 +156,8 @@ export const defaultRolePermissions: Record<UserRole, RolePermissions> = {
       '/admin',
       '/dashboard',
       '/routers',
+      '/olts',
+      '/accounting',
       '/ppp',
       '/hotspot',
       '/analytics',
@@ -171,6 +175,7 @@ export const defaultRolePermissions: Record<UserRole, RolePermissions> = {
     permissions: [
       'routers:read',
       'routers:execute',
+      'olts:read',
       'ppp:create',
       'ppp:read',
       'ppp:update',
@@ -184,6 +189,7 @@ export const defaultRolePermissions: Record<UserRole, RolePermissions> = {
     allowedRoutes: [
       '/dashboard',
       '/routers',
+      '/olts',
       '/ppp',
       '/hotspot',
       '/analytics',
@@ -305,9 +311,13 @@ export function isRouteAllowed(
   route: string
 ): boolean {
   if (!user) return false;
+
+  // Super admin bypasses route checks
+  if (user.role === 'super_admin') return true;
+
   const rolePerms = defaultRolePermissions[user.role];
   if (!rolePerms) return false;
-  
+
   return (
     rolePerms.allowedRoutes.some((r) => route.startsWith(r)) &&
     !rolePerms.deniedRoutes.some((r) => route.startsWith(r))

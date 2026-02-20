@@ -67,6 +67,8 @@ export const Header = ({
   const [searchQuery, setSearchQuery] = useState("");
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const quickSettingsRef = useRef<HTMLDivElement>(null);
+  const rightSidebarToggleRef = useRef<HTMLDivElement>(null);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
@@ -76,6 +78,12 @@ export const Header = ({
       }
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
+      }
+      if (quickSettingsRef.current && !quickSettingsRef.current.contains(event.target as Node)) {
+        setShowQuickSettings(false);
+      }
+      if (rightSidebarToggleRef.current && !rightSidebarToggleRef.current.contains(event.target as Node)) {
+        setShowRightSidebar(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -95,18 +103,25 @@ export const Header = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Derive a left-* class from `sidebarWidth` (e.g. "w-64" -> "left-64")
+  const leftClass = sidebarCollapsed
+    ? "left-20"
+    : sidebarWidth.startsWith("w-")
+    ? sidebarWidth.replace(/^w-/, "left-")
+    : sidebarWidth;
+
+  const headerClassName = `
+    fixed top-0 right-0 z-30 h-16
+    bg-white dark:bg-slate-800
+    border-b border-slate-200 dark:border-slate-700
+    transition-all duration-300 ease-in-out
+    ${leftClass}
+    ${className}
+  `;
+
   return (
     <>
-      <header
-        className={`
-          fixed top-0 right-0 z-30 h-16
-          bg-white dark:bg-slate-800
-          border-b border-slate-200 dark:border-slate-700
-          transition-all duration-300 ease-in-out
-          ${sidebarCollapsed ? "left-20" : sidebarWidth}
-          ${className}
-        `}
-      >
+      <header className={headerClassName}>
         <div className="flex items-center justify-between h-full px-6">
           {/* Left side - Mobile menu & Search */}
           <div className="flex items-center gap-4">
@@ -153,32 +168,36 @@ export const Header = ({
           {/* Right side - Actions */}
           <div className="flex items-center gap-2">
             {/* Right Sidebar Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setShowRightSidebar(!showRightSidebar)}
-              className={`
-                p-2.5 rounded-xl
-                transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-blue-500
-                ${showRightSidebar
-                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700/50"
-                }
-              `}
-              aria-label={showRightSidebar ? "Close quick settings panel" : "Open quick settings panel"}
-              aria-expanded={showRightSidebar}
-            >
-              <ChevronRight
-                size={20}
-                className={`transition-transform duration-300 ${showRightSidebar ? "rotate-180" : ""}`}
-              />
-            </button>
+            <div ref={rightSidebarToggleRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowRightSidebar(!showRightSidebar)}
+                className={`
+                  p-2.5 rounded-xl
+                  transition-all duration-200
+                  focus:outline-none focus:ring-2 focus:ring-blue-500
+                  ${showRightSidebar
+                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-700/50"
+                  }
+                `}
+                aria-label={showRightSidebar ? "Close right sidebar" : "Open right sidebar"}
+                aria-expanded={showRightSidebar}
+              >
+                <ChevronRight
+                  size={20}
+                  className={`transition-transform duration-300 ${showRightSidebar ? "rotate-180" : ""}`}
+                />
+              </button>
+            </div>
 
             {/* Quick Settings Toggle */}
-            <QuickSettingsToggle
-              isOpen={showQuickSettings}
-              onClick={() => setShowQuickSettings(!showQuickSettings)}
-            />
+            <div ref={quickSettingsRef} className="relative">
+              <QuickSettingsToggle
+                isOpen={showQuickSettings}
+                onClick={() => setShowQuickSettings(!showQuickSettings)}
+              />
+            </div>
 
             {/* Dark Mode Toggle */}
             <button
