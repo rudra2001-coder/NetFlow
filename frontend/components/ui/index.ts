@@ -22,6 +22,7 @@ export * from './StatCard';
 // Custom UI Components
 export * from './CommandBar';
 export * from './ContextSwitcher';
+export * from './QuickSearch';
 
 // Layout Components
 export { PageLayout } from '../layout/PageLayout';

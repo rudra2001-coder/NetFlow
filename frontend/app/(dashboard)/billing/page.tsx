@@ -1,55 +1,57 @@
-"use client";
+'use client';
 
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
-    CreditCard, Search, Filter, Calendar,
-    ArrowUpRight, ArrowDownLeft, Receipt,
-    Wallet, Landmark, Smartphone, MoreVertical,
-    Download, Printer, Trash2, CheckCircle2,
-    TrendingUp, TrendingDown, DollarSign, Globe, Play
+  CreditCard, Search, Download, Printer, DollarSign, User, Phone,
+  MapPin, Package, Clock, Wifi, Server, FileText, CheckCircle,
+  X, MoreVertical, ChevronDown, Upload, Users, Map, CreditCardIcon,
+  Star, Calendar, TrendingUp, Wallet, AlertCircle, Square, Check
 } from "lucide-react";
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-    ResponsiveContainer, AreaChart, Area, LineChart, Line
-} from "recharts";
-import {
-    Button, Card, CardBody, CardHeader,
-    Input, Badge, Select, Dropdown, Modal
-} from "@/components";
+import { Button, Card, CardBody, CardHeader, Badge, Modal } from "@/components";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
 // Types & Mock Data
 // ============================================================================
 
-interface Transaction {
-    id: string;
-    customer: string;
-    amount: number;
-    type: "Cash" | "Bkash" | "Nogod" | "Online" | "Bank";
-    status: "Completed" | "Pending" | "Failed";
-    date: string;
-    reference: string;
+interface CustomerBilling {
+  id: string;
+  customerCode: string;
+  loginId: string;
+  ipAddress: string;
+  customerName: string;
+  username: string;
+  phone: string;
+  zone: string;
+  district: string;
+  thana: string;
+  customerType: 'Home' | 'Business';
+  connectionType: 'Fiber' | 'UTP' | 'Wireless';
+  package: string;
+  speed: string;
+  monthlyAmount: number;
+  receivedAmount: number;
+  vat: number;
+  dueAmount: number;
+  advanceAmount: number;
+  expiryDate: string;
+  paymentDate: string;
+  server: string;
+  manualStatus: boolean;
+  billingStatus: 'Paid' | 'Unpaid' | 'Partial';
+  isVIP: boolean;
 }
 
-const mockTransactions: Transaction[] = [
-    { id: "TX_001", customer: "Rudra", amount: 15.00, type: "Cash", status: "Completed", date: "2024-03-20 10:30", reference: "BILL_442" },
-    { id: "TX_002", customer: "John Wick", amount: 45.99, type: "Bkash", status: "Completed", date: "2024-03-20 11:15", reference: "BILL_881" },
-    { id: "TX_003", customer: "Sarah Connor", amount: 1.00, type: "Nogod", status: "Completed", date: "2024-03-20 12:45", reference: "VOUCH_12" },
-    { id: "TX_004", customer: "Tony Stark", amount: 500.00, type: "Bank", status: "Completed", date: "2024-03-19 09:00", reference: "CORE_77" },
-    { id: "TX_005", customer: "Bruce Wayne", amount: 120.50, type: "Online", status: "Pending", date: "2024-03-19 15:30", reference: "BILL_009" },
-    { id: "TX_006", customer: "Clark Kent", amount: 3.50, type: "Cash", status: "Completed", date: "2024-03-19 18:20", reference: "VOUCH_44" },
-    { id: "TX_007", customer: "Peter Parker", amount: 25.00, type: "Bkash", status: "Failed", date: "2024-03-18 10:00", reference: "ERR_991" },
-];
-
-const dailyCollectionData = [
-    { day: "Mon", amount: 4500 },
-    { day: "Tue", amount: 5200 },
-    { day: "Wed", amount: 3800 },
-    { day: "Thu", amount: 6400 },
-    { day: "Fri", amount: 7800 },
-    { day: "Sat", amount: 8200 },
-    { day: "Sun", amount: 4100 },
+const mockCustomers: CustomerBilling[] = [
+  { id: '1', customerCode: 'C-001', loginId: 'rahim.isp', ipAddress: '10.0.1.101', customerName: 'Rahim Ahmed', username: 'rahim.isp', phone: '+8801712345678', zone: 'Gulshan', district: 'Dhaka', thana: 'Gulshan', customerType: 'Home', connectionType: 'Fiber', package: 'Home 10Mbps', speed: '10 Mbps', monthlyAmount: 450, receivedAmount: 450, vat: 45, dueAmount: 0, advanceAmount: 0, expiryDate: '2026-03-15', paymentDate: '2026-02-01', server: 'SRV-01', manualStatus: true, billingStatus: 'Paid', isVIP: false },
+  { id: '2', customerCode: 'C-002', loginId: 'karim.net', ipAddress: '10.0.1.102', customerName: 'Karim Khan', username: 'karim.net', phone: '+8801812345678', zone: 'Banani', district: 'Dhaka', thana: 'Banani', customerType: 'Business', connectionType: 'Fiber', package: 'Business 20Mbps', speed: '20 Mbps', monthlyAmount: 600, receivedAmount: 0, vat: 60, dueAmount: 660, advanceAmount: 0, expiryDate: '2026-02-20', paymentDate: '', server: 'SRV-01', manualStatus: true, billingStatus: 'Unpaid', isVIP: true },
+  { id: '3', customerCode: 'C-003', loginId: 'john.doe', ipAddress: '10.0.1.103', customerName: 'John Doe', username: 'john.doe', phone: '+8801912345678', zone: 'Uttara', district: 'Dhaka', thana: 'Uttara', customerType: 'Home', connectionType: 'UTP', package: 'Home 5Mbps', speed: '5 Mbps', monthlyAmount: 300, receivedAmount: 150, vat: 30, dueAmount: 180, advanceAmount: 0, expiryDate: '2026-02-10', paymentDate: '2026-01-25', server: 'SRV-02', manualStatus: true, billingStatus: 'Partial', isVIP: false },
+  { id: '4', customerCode: 'C-004', loginId: 'sarah.s', ipAddress: '10.0.1.104', customerName: 'Sarah Smith', username: 'sarah.s', phone: '+8801512345678', zone: 'Dhanmondi', district: 'Dhaka', thana: 'Dhanmondi', customerType: 'Home', connectionType: 'Fiber', package: 'Home 15Mbps', speed: '15 Mbps', monthlyAmount: 550, receivedAmount: 550, vat: 55, dueAmount: 0, advanceAmount: 200, expiryDate: '2026-03-01', paymentDate: '2026-02-01', server: 'SRV-01', manualStatus: true, billingStatus: 'Paid', isVIP: true },
+  { id: '5', customerCode: 'C-005', loginId: 'mike.w', ipAddress: '10.0.1.105', customerName: 'Mike Wilson', username: 'mike.w', phone: '+8801612345678', zone: 'Mirpur', district: 'Dhaka', thana: 'Mirpur', customerType: 'Business', connectionType: 'Fiber', package: 'Business 50Mbps', speed: '50 Mbps', monthlyAmount: 1200, receivedAmount: 0, vat: 120, dueAmount: 1320, advanceAmount: 0, expiryDate: '2026-02-15', paymentDate: '', server: 'SRV-03', manualStatus: false, billingStatus: 'Unpaid', isVIP: false },
+  { id: '6', customerCode: 'C-006', loginId: 'lisa.a', ipAddress: '10.0.1.106', customerName: 'Lisa Anderson', username: 'lisa.a', phone: '+8801312345678', zone: 'Gulshan', district: 'Dhaka', thana: 'Gulshan', customerType: 'Home', connectionType: 'Wireless', package: 'Home 8Mbps', speed: '8 Mbps', monthlyAmount: 380, receivedAmount: 380, vat: 38, dueAmount: 0, advanceAmount: 0, expiryDate: '2026-02-25', paymentDate: '2026-02-05', server: 'SRV-02', manualStatus: true, billingStatus: 'Paid', isVIP: false },
+  { id: '7', customerCode: 'C-007', loginId: 'david.b', ipAddress: '10.0.1.107', customerName: 'David Brown', username: 'david.b', phone: '+8801412345678', zone: 'Baridhara', district: 'Dhaka', thana: 'Baridhara', customerType: 'Home', connectionType: 'Fiber', package: 'Home 12Mbps', speed: '12 Mbps', monthlyAmount: 480, receivedAmount: 0, vat: 48, dueAmount: 528, advanceAmount: 0, expiryDate: '2026-02-18', paymentDate: '', server: 'SRV-01', manualStatus: true, billingStatus: 'Unpaid', isVIP: false },
+  { id: '8', customerCode: 'C-008', loginId: 'emma.w', ipAddress: '10.0.1.108', customerName: 'Emma Wilson', username: 'emma.w', phone: '+8801712345679', zone: 'Banani', district: 'Dhaka', thana: 'Banani', customerType: 'Business', connectionType: 'Fiber', package: 'Business 30Mbps', speed: '30 Mbps', monthlyAmount: 900, receivedAmount: 900, vat: 90, dueAmount: 0, advanceAmount: 500, expiryDate: '2026-03-10', paymentDate: '2026-02-10', server: 'SRV-03', manualStatus: true, billingStatus: 'Paid', isVIP: true },
 ];
 
 // ============================================================================
@@ -57,450 +59,628 @@ const dailyCollectionData = [
 // ============================================================================
 
 export default function BillingPage() {
-    const [searchQuery, setSearchQuery] = useState("");
-    const [paymentFilter, setPaymentFilter] = useState("all");
-    const [daysFilter, setDaysFilter] = useState("7");
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [zoneFilter, setZoneFilter] = useState("all");
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerBilling | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showBulkMenu, setShowBulkMenu] = useState<string | null>(null);
+  
+  // Payment form state
+  const [paymentForm, setPaymentForm] = useState({
+    method: 'cash',
+    receivedAmount: '',
+    discountAmount: '0',
+    advanceAmount: '0',
+    notes: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+    sendSMS: false,
+    newExpiryDate: '',
+    changeExpiry: false,
+  });
 
-    const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
-    const [showReceipt, setShowReceipt] = useState(false);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-
-    // Advanced Payment State
-    const [billData, setBillData] = useState({
-        customer: "",
-        monthlyAmount: 15,
-        paidAmount: 0,
-        isYearly: false,
+  // Filter customers
+  const filteredCustomers = useMemo(() => {
+    return mockCustomers.filter(customer => {
+      const matchesSearch = 
+        customer.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.phone.includes(searchQuery) ||
+        customer.zone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.customerCode.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || customer.billingStatus === statusFilter;
+      const matchesZone = zoneFilter === 'all' || customer.zone === zoneFilter;
+      
+      return matchesSearch && matchesStatus && matchesZone;
     });
+  }, [searchQuery, statusFilter, zoneFilter]);
 
-    const calculatedBill = billData.isYearly ? billData.monthlyAmount * 12 : billData.monthlyAmount;
-    const balance = billData.paidAmount - calculatedBill;
-
-    const filteredTransactions = useMemo(() => {
-        return mockTransactions.filter(tx => {
-            const matchesSearch = tx.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                tx.id.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesType = paymentFilter === "all" || tx.type === paymentFilter;
-            return matchesSearch && matchesType;
-        });
-    }, [searchQuery, paymentFilter]);
-
-    const handleViewReceipt = (tx: Transaction) => {
-        setSelectedTx(tx);
-        setShowReceipt(true);
+  // Calculate totals
+  const totals = useMemo(() => {
+    return {
+      totalCustomers: mockCustomers.length,
+      paidClients: mockCustomers.filter(c => c.billingStatus === 'Paid').length,
+      unpaidClients: mockCustomers.filter(c => c.billingStatus === 'Unpaid').length,
+      totalDue: mockCustomers.reduce((sum, c) => sum + c.dueAmount, 0),
+      totalReceived: mockCustomers.reduce((sum, c) => sum + c.receivedAmount, 0),
+      totalBilled: mockCustomers.reduce((sum, c) => sum + c.monthlyAmount + c.vat, 0),
+      totalAdvance: mockCustomers.reduce((sum, c) => sum + c.advanceAmount, 0),
+      monthlyBill: mockCustomers.reduce((sum, c) => sum + c.monthlyAmount, 0),
     };
+  }, []);
 
-    const handleQuickPay = (tx: Transaction) => {
-        setBillData({
-            customer: tx.customer,
-            monthlyAmount: tx.amount,
-            paidAmount: 0,
-            isYearly: false,
-        });
-        setShowPaymentModal(true);
-    };
+  // Get unique zones
+  const zones = useMemo(() => Array.from(new Set(mockCustomers.map(c => c.zone))), []);
 
-    const getPaymentIcon = (type: Transaction["type"]) => {
-        switch (type) {
-            case "Cash": return <Wallet className="w-4 h-4" />;
-            case "Bank": return <Landmark className="w-4 h-4" />;
-            case "Online": return <Globe className="w-4 h-4" />;
-            case "Bkash":
-            case "Nogod": return <Smartphone className="w-4 h-4" />;
-            default: return <CreditCard className="w-4 h-4" />;
-        }
-    };
-
-    return (
-        <div className="space-y-6 animate-fadeIn pb-24">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-2">
-                        <CreditCard className="w-7 h-7 text-primary-500" />
-                        Billing Command Center
-                    </h1>
-                    <p className="text-sm text-neutral-500 font-medium tracking-tight">Enterprise financial ledger with real-time balance tracking.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" leftIcon={<Printer className="w-4 h-4" />} className="hidden md:flex">Print Reports</Button>
-                    <Button
-                        className="shadow-lg shadow-primary-500/20 bg-primary-600 hover:bg-primary-700"
-                        leftIcon={<DollarSign className="w-4 h-4" />}
-                        onClick={() => setShowPaymentModal(true)}
-                    >
-                        Collect Payment
-                    </Button>
-                </div>
-            </div>
-
-            {/* Daily Collection Statistics */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-2 glass border-0 shadow-xl overflow-hidden">
-                    <CardHeader
-                        title="Global Revenue Stream"
-                        subtitle={`Collection velocity for the last ${daysFilter} days`}
-                        action={
-                            <div className="flex items-center gap-2">
-                                <Select
-                                    value={daysFilter}
-                                    onChange={(val) => setDaysFilter(val)}
-                                    options={[
-                                        { value: "7", label: "7D View" },
-                                        { value: "14", label: "14D View" },
-                                        { value: "30", label: "30D View" },
-                                    ]}
-                                />
-                            </div>
-                        }
-                    />
-                    <CardBody className="p-0">
-                        <div className="h-72 w-full pt-4">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={dailyCollectionData}>
-                                    <defs>
-                                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888815" />
-                                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 10, fontWeight: 700 }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#888', fontSize: 10, fontWeight: 700 }} tickFormatter={(v) => `$${v}`} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                            backdropFilter: 'blur(10px)',
-                                            borderRadius: '16px',
-                                            border: 'none',
-                                            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
-                                        }}
-                                    />
-                                    <Area
-                                        type="monotone"
-                                        dataKey="amount"
-                                        stroke="#3b82f6"
-                                        strokeWidth={4}
-                                        fillOpacity={1}
-                                        fill="url(#colorAmount)"
-                                    />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardBody>
-                </Card>
-
-                <div className="space-y-4">
-                    <Card className="glass border-0 shadow-lg bg-gradient-to-br from-primary-600 to-primary-800 text-white overflow-hidden relative group">
-                        <CardBody className="p-6">
-                            <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Total Receivables</p>
-                                <h3 className="text-3xl font-black mb-4">$12,480.00</h3>
-                                <div className="flex items-center gap-2 text-[10px] font-bold bg-white/10 w-fit px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
-                                    <TrendingUp className="w-3 h-3 text-success-400" />
-                                    +24% Collection Growth
-                                </div>
-                            </div>
-                            <div className="absolute top-0 right-0 p-4 opacity-10 transform group-hover:rotate-12 transition-transform">
-                                <Landmark className="w-24 h-24" />
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    <Card className="glass border-0 shadow-lg">
-                        <CardBody className="p-5">
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center group/item hover:bg-neutral-50 dark:hover:bg-neutral-800/50 p-2 rounded-xl transition-colors cursor-pointer">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-success-50 dark:bg-success-900/20 rounded-xl text-success-600">
-                                            <Wallet className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest leading-tight">Cash Assets</p>
-                                            <p className="text-lg font-black dark:text-white">$3,240.25</p>
-                                        </div>
-                                    </div>
-                                    <Badge variant="success" size="sm" dot>Audited</Badge>
-                                </div>
-                                <div className="flex justify-between items-center group/item hover:bg-neutral-50 dark:hover:bg-neutral-800/50 p-2 rounded-xl transition-colors cursor-pointer">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600">
-                                            <Smartphone className="w-5 h-5" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest leading-tight">Digital MFS</p>
-                                            <p className="text-lg font-black dark:text-white">$8,120.50</p>
-                                        </div>
-                                    </div>
-                                    <Badge variant="info" size="sm">+15% week</Badge>
-                                </div>
-                            </div>
-                        </CardBody>
-                    </Card>
-                </div>
-            </div>
-
-            {/* Transactions List & Filters */}
-            <Card className="glass border-0 shadow-2xl">
-                <CardHeader
-                    title="Financial Ledger & Billing activity"
-                    subtitle="Filter and manage individual customer sessions and payments"
-                />
-                <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800 flex flex-col md:flex-row gap-4 items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/10">
-                    <div className="relative w-full md:w-80">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                        <Input
-                            placeholder="Find transaction or user..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-12 border-0 bg-white dark:bg-neutral-900 shadow-sm h-11 rounded-2xl"
-                        />
-                    </div>
-                    <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                        <Select
-                            value={paymentFilter}
-                            onChange={(val) => setPaymentFilter(val)}
-                            options={[
-                                { value: "all", label: "All Methods" },
-                                { value: "Cash", label: "Cash" },
-                                { value: "Bkash", label: "Bkash" },
-                                { value: "Nogod", label: "Nogod" },
-                                { value: "Online", label: "Online" },
-                                { value: "Bank", label: "Bank" },
-                            ]}
-                            className="w-full md:w-44"
-                        />
-                        <Button variant="outline" className="rounded-2xl h-11 px-6 font-bold" leftIcon={<Filter className="w-4 h-4" />}>Filters</Button>
-                        <Button variant="outline" className="rounded-2xl h-11 w-11 p-0 border-0 glass shadow-lg"><Download className="w-4 h-4" /></Button>
-                    </div>
-                </div>
-                <CardBody className="p-0">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-neutral-50/50 dark:bg-neutral-800/30 text-neutral-400 text-[10px] font-black uppercase tracking-widest border-b border-neutral-100 dark:border-neutral-800">
-                                    <th className="px-6 py-4">Status & Ledger</th>
-                                    <th className="px-6 py-4">Customer Identity</th>
-                                    <th className="px-6 py-4">Billed Amount</th>
-                                    <th className="px-6 py-4">Payment Node</th>
-                                    <th className="px-6 py-4">Timestamp</th>
-                                    <th className="px-6 py-4 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                                {filteredTransactions.map((tx) => (
-                                    <tr key={tx.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/20 transition-all duration-300 group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => handleQuickPay(tx)}
-                                                    className="w-10 h-10 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 hover:bg-primary-500 hover:text-white transition-all shadow-sm group/btn"
-                                                >
-                                                    <Play className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                                                </button>
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black text-neutral-400 uppercase tracking-tighter">{tx.id}</span>
-                                                    <Badge
-                                                        variant={tx.status === "Completed" ? "success" : tx.status === "Pending" ? "warning" : "error"}
-                                                        size="sm"
-                                                        className="mt-0.5"
-                                                    >
-                                                        {tx.status}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <p className="text-sm font-black dark:text-white leading-tight">{tx.customer}</p>
-                                                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-tighter mt-0.5">Reference: {tx.reference}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-black text-neutral-900 dark:text-white">${tx.amount.toFixed(2)}</span>
-                                                <span className="text-[10px] font-bold text-success-600 uppercase tracking-tighter">Current Plan</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 group-hover:bg-white dark:group-hover:bg-neutral-700 shadow-sm transition-colors">
-                                                    {getPaymentIcon(tx.type)}
-                                                </div>
-                                                <span className="text-xs font-bold text-neutral-600 dark:text-neutral-300">{tx.type}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="text-xs font-medium text-neutral-500 tabular-nums">{tx.date}</span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
-                                                <Button variant="ghost" size="sm" onClick={() => handleViewReceipt(tx)} className="p-2 h-9 w-9 hover:bg-white dark:hover:bg-neutral-700 shadow-sm rounded-xl"><Printer className="w-4 h-4" /></Button>
-                                                <Button variant="ghost" size="sm" className="p-2 h-9 w-9 hover:bg-white dark:hover:bg-neutral-700 shadow-sm rounded-xl"><Download className="w-4 h-4" /></Button>
-                                                <Dropdown
-                                                    trigger={<Button variant="ghost" size="sm" className="p-2 h-9 w-9 rounded-xl"><MoreVertical className="w-4 h-4" /></Button>}
-                                                    items={[
-                                                        { label: "View Detailed Receipt", icon: <Receipt className="w-4 h-4" />, onClick: () => handleViewReceipt(tx) },
-                                                        { label: "Email Invoice to Client", icon: <Globe className="w-4 h-4" /> },
-                                                        { label: "Void This Transaction", icon: <Trash2 className="w-4 h-4" />, danger: true },
-                                                    ]}
-                                                />
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </CardBody>
-            </Card>
-
-            {/* Collective Payment Modal (The Play Action) */}
-            <Modal
-                isOpen={showPaymentModal}
-                onClose={() => setShowPaymentModal(false)}
-                title="Advanced Bill Collection"
-                size="md"
-            >
-                <div className="space-y-6">
-                    <div className="bg-primary-50 dark:bg-primary-900/10 p-5 rounded-3xl border border-primary-500/20 relative overflow-hidden">
-                        <div className="relative z-10 flex justify-between items-end">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-primary-600 dark:text-primary-400 mb-1">Total Bill To Generate</p>
-                                <h2 className="text-4xl font-black text-primary-900 dark:text-white tracking-tighter">${calculatedBill.toFixed(2)}</h2>
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <span className="text-[10px] font-black text-neutral-400 uppercase mb-2">Billing Term</span>
-                                <div
-                                    className="p-1 bg-white dark:bg-neutral-800 rounded-xl flex gap-1 cursor-pointer shadow-sm border border-neutral-200 dark:border-neutral-700"
-                                    onClick={() => setBillData(prev => ({ ...prev, isYearly: !prev.isYearly }))}
-                                >
-                                    <div className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black transition-all", !billData.isYearly ? "bg-primary-600 text-white shadow-md shadow-primary-500/30" : "text-neutral-500")}>MONTHLY</div>
-                                    <div className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black transition-all", billData.isYearly ? "bg-primary-600 text-white shadow-md shadow-primary-500/30" : "text-neutral-500")}>YEARLY</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-5">
-                        <Input
-                            label="Customer Name / Service ID"
-                            placeholder="Type to search..."
-                            value={billData.customer}
-                            onChange={(e) => setBillData(prev => ({ ...prev, customer: e.target.value }))}
-                            className="rounded-2xl h-12 bg-neutral-50 dark:bg-neutral-800 border-0"
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                            <Input
-                                label="Unit Price"
-                                type="number"
-                                value={billData.monthlyAmount}
-                                onChange={(e) => setBillData(prev => ({ ...prev, monthlyAmount: parseFloat(e.target.value) || 0 }))}
-                                leftIcon={<DollarSign className="w-4 h-4" />}
-                                className="rounded-2xl h-12 bg-neutral-50 dark:bg-neutral-800 border-0"
-                            />
-                            <Input
-                                label="Paid Amount"
-                                type="number"
-                                value={billData.paidAmount}
-                                onChange={(e) => setBillData(prev => ({ ...prev, paidAmount: parseFloat(e.target.value) || 0 }))}
-                                leftIcon={<CreditCard className="w-4 h-4" />}
-                                className="rounded-2xl h-12 bg-neutral-50 dark:bg-neutral-800 border-0"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="p-5 rounded-3xl bg-neutral-900 text-white shadow-2xl relative overflow-hidden group">
-                        <div className="flex justify-between items-center relative z-10">
-                            <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Ledger Outcome</p>
-                                <h4 className={cn("text-2xl font-black italic", balance >= 0 ? "text-success-400" : "text-error-400")}>
-                                    {balance >= 0 ? `+ $${balance.toFixed(2)}` : `- $${Math.abs(balance).toFixed(2)}`}
-                                </h4>
-                            </div>
-                            <div className="text-right">
-                                <Badge variant={balance >= 0 ? "success" : "error"} className="rounded-full shadow-lg h-8 px-4 flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                                    {balance >= 0 ? "ADVANCE CREDIT" : "REMAINING DUE"}
-                                </Badge>
-                            </div>
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-transparent pointer-events-none" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-4">
-                        <Button variant="outline" className="h-12 rounded-2xl font-bold" onClick={() => setShowPaymentModal(false)}>Cancel Action</Button>
-                        <Button className="h-12 rounded-2xl font-black shadow-xl shadow-primary-500/20" leftIcon={<CheckCircle2 className="w-4 h-4" />}>Confirm Payment</Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Receipt Modal */}
-            <Modal
-                isOpen={showReceipt}
-                onClose={() => setShowReceipt(false)}
-                title="Universal Financial Ledger"
-                size="md"
-            >
-                {selectedTx && (
-                    <div className="space-y-6">
-                        <div className="flex flex-col items-center justify-center p-8 bg-neutral-50 dark:bg-neutral-900/50 rounded-[2.5rem] border-2 border-dashed border-neutral-200 dark:border-neutral-700 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 via-purple-500 to-info-500 opacity-60" />
-                            <div className="w-20 h-20 bg-white dark:bg-neutral-800 rounded-3xl flex items-center justify-center shadow-2xl mb-6 border-4 border-primary-500/10 rotate-3 hover:rotate-0 transition-transform">
-                                <CheckCircle2 className="w-10 h-10 text-success-500" />
-                            </div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-2">Settlement Proof</p>
-                            <h2 className="text-5xl font-black text-neutral-900 dark:text-white tracking-tighter tabular-nums">${selectedTx.amount.toFixed(2)}</h2>
-                            <p className="text-xs font-black text-success-600 mt-4 uppercase tracking-widest py-1 px-3 bg-success-50 dark:bg-success-900/20 rounded-full">Transaction Finalized</p>
-                        </div>
-
-                        <div className="space-y-5 px-2">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase text-neutral-400 tracking-wider">Transaction ID</p>
-                                    <p className="text-sm font-black dark:text-white tabular-nums">{selectedTx.id}</p>
-                                </div>
-                                <div className="space-y-1.5 text-right">
-                                    <p className="text-[10px] font-black uppercase text-neutral-400 tracking-wider">Ledger Entry</p>
-                                    <p className="text-sm font-black dark:text-white tabular-nums">{selectedTx.date}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <p className="text-[10px] font-black uppercase text-neutral-400 tracking-wider">Counterparty</p>
-                                    <p className="text-sm font-black dark:text-white">{selectedTx.customer}</p>
-                                </div>
-                                <div className="space-y-1.5 text-right">
-                                    <p className="text-[10px] font-black uppercase text-neutral-400 tracking-wider">Asset Node</p>
-                                    <p className="text-sm font-black dark:text-white flex items-center justify-end gap-2 uppercase italic">
-                                        {getPaymentIcon(selectedTx.type)}
-                                        {selectedTx.type}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-700/50">
-                                <div className="flex justify-between items-center mb-3">
-                                    <span className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">Policy Reference</span>
-                                    <span className="text-sm font-black text-primary-600 italic tracking-tighter">{selectedTx.reference}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[11px] font-black text-neutral-400 uppercase tracking-widest">Operational Status</span>
-                                    <Badge variant="success" size="sm" className="rounded-xl px-4 font-black">STABLE</Badge>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 pt-2">
-                            <Button variant="outline" className="flex-1 h-12 rounded-2xl font-bold" leftIcon={<Printer className="w-4 h-4" />} onClick={() => window.print()}>Print Proof</Button>
-                            <Button className="flex-1 h-12 rounded-2xl font-black" leftIcon={<Download className="w-4 h-4" />}>PDF Vault</Button>
-                        </div>
-
-                        <p className="text-[10px] text-center text-neutral-400 italic font-bold uppercase tracking-tighter opacity-70">
-                            Professional Grade Financial Document • Generated by NetFlow Core Engine
-                        </p>
-                    </div>
-                )}
-            </Modal>
-        </div>
+  // Toggle customer selection
+  const toggleCustomer = (id: string) => {
+    setSelectedCustomers(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
+  };
+
+  // Toggle all customers
+  const toggleAll = () => {
+    if (selectedCustomers.length === filteredCustomers.length) {
+      setSelectedCustomers([]);
+    } else {
+      setSelectedCustomers(filteredCustomers.map(c => c.id));
+    }
+  };
+
+  // Bulk pay all selected
+  const handleBulkPayAll = () => {
+    alert(`Processing payment for ${selectedCustomers.length} customers`);
+    setSelectedCustomers([]);
+  };
+
+  // Open payment modal
+  const handlePayClick = (customer: CustomerBilling) => {
+    setSelectedCustomer(customer);
+    setPaymentForm({
+      method: 'cash',
+      receivedAmount: customer.dueAmount > 0 ? customer.dueAmount.toString() : customer.monthlyAmount.toString(),
+      discountAmount: '0',
+      advanceAmount: '0',
+      notes: '',
+      paymentDate: new Date().toISOString().split('T')[0],
+      sendSMS: false,
+      newExpiryDate: customer.expiryDate,
+      changeExpiry: false,
+    });
+    setShowPaymentModal(true);
+  };
+
+  // Handle payment submit
+  const handlePaymentSubmit = () => {
+    console.log('Payment submitted:', { customer: selectedCustomer, ...paymentForm });
+    setShowPaymentModal(false);
+    alert(`Payment of $${paymentForm.receivedAmount} recorded for ${selectedCustomer?.customerName}!`);
+  };
+
+  // Get billing status badge
+  const getStatusBadge = (status: CustomerBilling['billingStatus']) => {
+    switch (status) {
+      case 'Paid': return <Badge variant="success">Paid</Badge>;
+      case 'Unpaid': return <Badge variant="error">Unpaid</Badge>;
+      case 'Partial': return <Badge variant="warning">Partial</Badge>;
+    }
+  };
+
+  // Format date
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <div className="space-y-6 animate-fadeIn">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+            <CreditCard className="w-6 h-6 text-blue-600" />
+            Billing Management
+          </h1>
+          <p className="text-sm text-neutral-500">Manage customer bills, payments, and due collections</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.push('/accounting/payments/daily')}>
+            <Calendar className="w-4 h-4 mr-2" /> Daily Collection
+          </Button>
+        </div>
+      </div>
+
+      {/* Summary Cards - 7 KPI Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CheckCircle className="w-4 h-4 text-green-200" />
+              <p className="text-green-100 text-xs">Paid Client</p>
+            </div>
+            <p className="text-2xl font-bold">{totals.paidClients}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle className="w-4 h-4 text-red-200" />
+              <p className="text-red-100 text-xs">Unpaid Client</p>
+            </div>
+            <p className="text-2xl font-bold">{totals.unpaidClients}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Wallet className="w-4 h-4 text-emerald-200" />
+              <p className="text-emerald-100 text-xs">Received Bill</p>
+            </div>
+            <p className="text-2xl font-bold">${totals.totalReceived.toLocaleString()}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-orange-200" />
+              <p className="text-orange-100 text-xs">Due Amount</p>
+            </div>
+            <p className="text-2xl font-bold">${totals.totalDue.toLocaleString()}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <FileText className="w-4 h-4 text-blue-200" />
+              <p className="text-blue-100 text-xs">Generated Bill</p>
+            </div>
+            <p className="text-2xl font-bold">${totals.totalBilled.toLocaleString()}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <CreditCardIcon className="w-4 h-4 text-purple-200" />
+              <p className="text-purple-100 text-xs">Advance Amount</p>
+            </div>
+            <p className="text-2xl font-bold">${totals.totalAdvance.toLocaleString()}</p>
+          </CardBody>
+        </Card>
+        <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+          <CardBody className="p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="w-4 h-4 text-indigo-200" />
+              <p className="text-indigo-100 text-xs">Monthly Bill</p>
+            </div>
+            <p className="text-2xl font-bold">${totals.monthlyBill.toLocaleString()}</p>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Action Button Panel - Bulk Operations */}
+      <Card>
+        <CardBody className="p-4">
+          <div className="flex flex-wrap gap-2">
+            {/* Export & Sync */}
+            <div className="flex gap-2 border-r border-neutral-200 dark:border-neutral-700 pr-4">
+              <Button variant="outline" size="sm">
+                <FileText className="w-4 h-4 mr-1" /> Generate Excel
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-1" /> Generate PDF
+              </Button>
+              <Button variant="outline" size="sm">
+                <Upload className="w-4 h-4 mr-1" /> Sync Clients
+              </Button>
+            </div>
+
+            {/* Bulk Client Management */}
+            <div className="flex gap-2 border-r border-neutral-200 dark:border-neutral-700 pr-4">
+              <Button variant="outline" size="sm" disabled={selectedCustomers.length === 0}>
+                <X className="w-4 h-4 mr-1" /> Disable Selected
+              </Button>
+              <Button variant="outline" size="sm" disabled={selectedCustomers.length === 0}>
+                <CheckCircle className="w-4 h-4 mr-1" /> Enable Selected
+              </Button>
+              <Button variant="outline" size="sm" disabled={selectedCustomers.length === 0}>
+                <Users className="w-4 h-4 mr-1" /> Assign Employee
+              </Button>
+            </div>
+
+            {/* Bulk Location Change */}
+            <div className="relative">
+              <Button variant="outline" size="sm" onClick={() => setShowBulkMenu(showBulkMenu === 'location' ? null : 'location')}>
+                <Map className="w-4 h-4 mr-1" /> Bulk Location
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+              {showBulkMenu === 'location' && (
+                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg z-10 py-2 min-w-[160px]">
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk Zone Change</button>
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk District Change</button>
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk Thana Change</button>
+                </div>
+              )}
+            </div>
+
+            {/* Billing Operations */}
+            <div className="relative">
+              <Button variant="outline" size="sm" onClick={() => setShowBulkMenu(showBulkMenu === 'billing' ? null : 'billing')}>
+                <CreditCard className="w-4 h-4 mr-1" /> Billing Ops
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+              {showBulkMenu === 'billing' && (
+                <div className="absolute top-full left-0 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg z-10 py-2 min-w-[180px]">
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk Status Change</button>
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk Billing Date Extend</button>
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Bulk Profile Change</button>
+                  <button className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800">Download Invoice</button>
+                </div>
+              )}
+            </div>
+
+            {/* VIP Controls */}
+            <div className="flex gap-2 border-l border-neutral-200 dark:border-neutral-700 pl-4">
+              <Button variant="outline" size="sm" className="border-yellow-500 text-yellow-600" disabled={selectedCustomers.length === 0}>
+                <Star className="w-4 h-4 mr-1" /> Add to VIP
+              </Button>
+              <Button variant="outline" size="sm" disabled={selectedCustomers.length === 0}>
+                <Star className="w-4 h-4 mr-1" /> Remove from VIP
+              </Button>
+            </div>
+
+            {/* Bulk Pay All */}
+            <div className="flex gap-2 border-l border-neutral-200 dark:border-neutral-700 pl-4 ml-auto">
+              <Button 
+                className="bg-green-500 hover:bg-green-600" 
+                size="sm" 
+                disabled={selectedCustomers.length === 0}
+                onClick={handleBulkPayAll}
+              >
+                <CreditCard className="w-4 h-4 mr-1" /> 
+                Pay All ({selectedCustomers.length})
+              </Button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Filters */}
+      <Card>
+        <CardBody className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, username, phone, code, zone..."
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+                />
+              </div>
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+            >
+              <option value="all">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Partial">Partial</option>
+            </select>
+            <select
+              value={zoneFilter}
+              onChange={(e) => setZoneFilter(e.target.value)}
+              className="px-4 py-2.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900"
+            >
+              <option value="all">All Zones</option>
+              {zones.map(zone => (
+                <option key={zone} value={zone}>{zone}</option>
+              ))}
+            </select>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Data Table */}
+      <Card>
+        <CardBody className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-800">
+                <tr>
+                  <th className="px-3 py-3 text-left">
+                    <button
+                      onClick={toggleAll}
+                      className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                    >
+                      {selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0 ? (
+                        <Check className="w-4 h-4" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">C.Code</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">ID/IP</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Cus. Name</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Mobile</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Zone</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Type</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Conn.</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Package</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Speed</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Ex.Date</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">M.Bill</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">Received</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">VAT</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">Balance</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-neutral-500 uppercase">Advance</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Pay Date</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-neutral-500 uppercase">Server</th>
+                  <th className="px-3 py-3 text-center text-xs font-semibold text-neutral-500 uppercase">M.Status</th>
+                  <th className="px-3 py-3 text-center text-xs font-semibold text-neutral-500 uppercase">B.Status</th>
+                  <th className="px-3 py-3 text-center text-xs font-semibold text-neutral-500 uppercase">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {filteredCustomers.map((customer) => (
+                  <tr key={customer.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                    <td className="px-3 py-3">
+                      <button
+                        onClick={() => toggleCustomer(customer.id)}
+                        className="p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                      >
+                        {selectedCustomers.includes(customer.id) ? (
+                          <Check className="w-4 h-4 text-blue-500" />
+                        ) : (
+                          <Square className="w-4 h-4 text-neutral-300" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-1">
+                        {customer.isVIP && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                        <span className="text-sm font-medium text-neutral-900">{customer.customerCode}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">
+                      <div>{customer.loginId}</div>
+                      <div className="text-xs text-neutral-400">{customer.ipAddress}</div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                          <User className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-medium text-neutral-900">{customer.customerName}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.phone}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.zone}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.customerType}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.connectionType}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.package}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.speed}</td>
+                    <td className="px-3 py-3 text-sm">
+                      <span className={cn(
+                        new Date(customer.expiryDate) < new Date() ? "text-red-600 font-medium" : ""
+                      )}>
+                        {formatDate(customer.expiryDate)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-sm text-right font-medium">${customer.monthlyAmount}</td>
+                    <td className="px-3 py-3 text-sm text-right text-green-600">${customer.receivedAmount}</td>
+                    <td className="px-3 py-3 text-sm text-right">${customer.vat}</td>
+                    <td className="px-3 py-3 text-sm text-right font-bold text-orange-600">
+                      ${customer.dueAmount}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-right text-purple-600">${customer.advanceAmount}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{formatDate(customer.paymentDate)}</td>
+                    <td className="px-3 py-3 text-sm text-neutral-600">{customer.server}</td>
+                    <td className="px-3 py-3 text-center">
+                      <button className={cn(
+                        "w-8 h-5 rounded-full transition-colors",
+                        customer.manualStatus ? "bg-green-500" : "bg-neutral-300"
+                      )}>
+                        <div className={cn(
+                          "w-4 h-4 rounded-full bg-white transform transition-transform",
+                          customer.manualStatus ? "translate-x-3.5" : "translate-x-0.5"
+                        )} />
+                      </button>
+                    </td>
+                    <td className="px-3 py-3 text-center">{getStatusBadge(customer.billingStatus)}</td>
+                    <td className="px-3 py-3 text-center">
+                      <Button 
+                        size="sm" 
+                        onClick={() => handlePayClick(customer)}
+                        className={customer.dueAmount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-green-500 hover:bg-green-600"}
+                      >
+                        {customer.dueAmount > 0 ? 'Pay Due' : 'Pay'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Payment Modal */}
+      <Modal 
+        isOpen={showPaymentModal} 
+        onClose={() => setShowPaymentModal(false)}
+        title="Record Payment"
+        size="lg"
+      >
+        {selectedCustomer && (
+          <div className="space-y-6">
+            {/* Customer Info */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900 dark:text-white">{selectedCustomer.customerName}</p>
+                    <p className="text-sm text-neutral-500">{selectedCustomer.username} • {selectedCustomer.phone}</p>
+                    <p className="text-sm text-neutral-500">{selectedCustomer.package} • {selectedCustomer.zone}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-neutral-500">Due Amount</p>
+                  <p className="text-2xl font-bold text-orange-600">${selectedCustomer.dueAmount}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">Payment Method</label>
+              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+                {[
+                  { value: 'cash', label: 'Cash' },
+                  { value: 'bank_transfer', label: 'Bank' },
+                  { value: 'bkash', label: 'bKash' },
+                  { value: 'nagad', label: 'Nagad' },
+                  { value: 'card', label: 'Card' },
+                ].map(method => (
+                  <button
+                    key={method.value}
+                    type="button"
+                    onClick={() => setPaymentForm({...paymentForm, method: method.value})}
+                    className={cn(
+                      "flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all",
+                      paymentForm.method === method.value
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                        : "border-neutral-200 dark:border-neutral-700"
+                    )}
+                  >
+                    <span className="text-sm font-medium">{method.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Amount Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Received Amount *</label>
+                <input
+                  type="number"
+                  value={paymentForm.receivedAmount}
+                  onChange={(e) => setPaymentForm({...paymentForm, receivedAmount: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Discount</label>
+                <input
+                  type="number"
+                  value={paymentForm.discountAmount}
+                  onChange={(e) => setPaymentForm({...paymentForm, discountAmount: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Advance</label>
+                <input
+                  type="number"
+                  value={paymentForm.advanceAmount}
+                  onChange={(e) => setPaymentForm({...paymentForm, advanceAmount: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            {/* Payment Date */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Date</label>
+                <input
+                  type="date"
+                  value={paymentForm.paymentDate}
+                  onChange={(e) => setPaymentForm({...paymentForm, paymentDate: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={paymentForm.sendSMS}
+                  onChange={(e) => setPaymentForm({...paymentForm, sendSMS: e.target.checked})}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Send SMS to customer</span>
+              </div>
+            </div>
+
+            {/* Change Expiry */}
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={paymentForm.changeExpiry}
+                  onChange={(e) => setPaymentForm({...paymentForm, changeExpiry: e.target.checked})}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium">Change Expiry Date</span>
+              </label>
+              {paymentForm.changeExpiry && (
+                <input
+                  type="date"
+                  value={paymentForm.newExpiryDate}
+                  onChange={(e) => setPaymentForm({...paymentForm, newExpiryDate: e.target.value})}
+                  className="w-full px-4 py-2.5 rounded-lg border mt-2"
+                />
+              )}
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Notes</label>
+              <textarea
+                value={paymentForm.notes}
+                onChange={(e) => setPaymentForm({...paymentForm, notes: e.target.value})}
+                rows={2}
+                className="w-full px-4 py-2.5 rounded-lg border"
+              />
+            </div>
+
+            {/* Summary */}
+            <div className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-4">
+              <div className="flex justify-between text-sm mb-1">
+                <span>Total Due:</span>
+                <span className="font-medium">${selectedCustomer.dueAmount}</span>
+              </div>
+              <div className="flex justify-between text-sm border-t pt-2 mt-2">
+                <span className="font-medium">Total Paid:</span>
+                <span className="font-bold text-green-600">
+                  ${((parseFloat(paymentForm.receivedAmount) || 0) + (parseFloat(paymentForm.discountAmount) || 0)).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setShowPaymentModal(false)}>Cancel</Button>
+              <Button onClick={handlePaymentSubmit}>Record Payment</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
 }
