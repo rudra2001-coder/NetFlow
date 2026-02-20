@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Settings,
   X,
+  Minus,
   Moon,
   Sun,
   Bell,
@@ -27,6 +28,7 @@ export interface QuickSettingsProps {
   onToggleDarkMode?: () => void;
   notifications?: boolean;
   onToggleNotifications?: () => void;
+  onMinimize?: () => void;
   className?: string;
 }
 
@@ -378,20 +380,37 @@ export const QuickSettingsDrawer = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onToggle}
-            className="
-              p-2 rounded-lg
-              text-slate-400 hover:text-slate-600 hover:bg-slate-100
-              dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700
-              transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-blue-500
-            "
-            aria-label="Close settings"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onMinimize?.()}
+              className="
+                p-2 rounded-lg
+                text-slate-400 hover:text-slate-600 hover:bg-slate-100
+                dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700
+                transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+              "
+              aria-label="Minimize settings"
+            >
+              <Minus size={18} />
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggle}
+              className="
+                p-2 rounded-lg
+                text-slate-400 hover:text-slate-600 hover:bg-slate-100
+                dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700
+                transition-all duration-200
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+              "
+              aria-label="Close settings"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

@@ -13,6 +13,7 @@ import {
   Play, Building2,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
+import { QuickSettingsDrawer, QuickSettingsToggle } from '@/components/layout/QuickSettingsDrawer';
 
 // ============================================================================
 // Types & Interfaces
@@ -337,11 +338,17 @@ function Sidebar({
             onClick={mobileOpen ? onToggleMobile : onToggleCollapse}
             className={cn(
               'p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800',
-              'text-neutral-500 transition-colors',
-              !collapsed && 'lg:hidden'
+              'text-neutral-500 transition-colors'
             )}
+            aria-label={mobileOpen ? 'Close menu' : collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            <X className="w-5 h-5" />
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : collapsed ? (
+              <ChevronRight className="w-5 h-5" />
+            ) : (
+              <ChevronLeft className="w-5 h-5" />
+            )}
           </button>
         </div>
 
@@ -398,6 +405,8 @@ function Header({
   setShowNotifications,
   acknowledgeAlert,
   onProfileClick,
+  onQuickToggle,
+  isQuickOpen,
 }: {
   onMenuClick: () => void;
   notifications: Alert[];
@@ -405,6 +414,8 @@ function Header({
   setShowNotifications: (show: boolean) => void;
   acknowledgeAlert: (id: string) => void;
   onProfileClick: () => void;
+  onQuickToggle?: () => void;
+  isQuickOpen?: boolean;
 }) {
   const criticalCount = notifications.filter(n => n.severity === 'critical' && !n.acknowledged).length;
 
@@ -511,11 +522,12 @@ function Header({
           )}
         </div>
 
+        {/* Quick Settings Toggle */}
+        <QuickSettingsToggle isOpen={isQuickOpen} onClick={() => onQuickToggle?.()} className="hidden sm:inline" />
+
         {/* User Menu */}
         <button
           onClick={() => {
-            // we use the router from the parent component indirectly or via a custom event
-            // but since layout is a client component, we can use a callback passed to Header
             onProfileClick();
           }}
           className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
@@ -542,6 +554,8 @@ export default function DashboardLayout({
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickMinimized, setQuickMinimized] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Alert[]>([
     { id: '1', severity: 'critical', title: 'Router Offline', message: 'RTR-HQ-01 is offline', timestamp: new Date(Date.now() - 2 * 60000), acknowledged: false, routerId: 'r1' },
@@ -599,6 +613,17 @@ export default function DashboardLayout({
         setShowNotifications={setShowNotifications}
         acknowledgeAlert={acknowledgeAlert}
         onProfileClick={() => handleNavigate('/profile')}
+        onQuickToggle={() => {
+          // if minimized, restore; otherwise toggle open
+          if (quickMinimized) {
+            setQuickMinimized(false);
+            setQuickOpen(true);
+            localStorage.removeItem('quickMinimized');
+          } else {
+            setQuickOpen((v) => !v);
+          }
+        }}
+        isQuickOpen={quickOpen}
       />
 
       <main
@@ -611,6 +636,32 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* Quick Settings Drawer */}
+      <QuickSettingsDrawer
+        isOpen={quickOpen && !quickMinimized}
+        onToggle={() => setQuickOpen((v) => !v)}
+        onMinimize={() => {
+          setQuickOpen(false);
+          setQuickMinimized(true);
+          try { localStorage.setItem('quickMinimized', '1'); } catch (e) {}
+        }}
+      />
+
+      {/* Minimized handle */}
+      {quickMinimized && (
+        <button
+          onClick={() => {
+            setQuickMinimized(false);
+            setQuickOpen(true);
+            try { localStorage.removeItem('quickMinimized'); } catch (e) {}
+          }}
+          aria-label="Open Quick Settings"
+          className="fixed right-2 top-1/2 z-50 p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg"
+        >
+          <Settings className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
+        </button>
+      )}
     </div>
   );
 }
