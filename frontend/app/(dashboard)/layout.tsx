@@ -12,7 +12,7 @@ import {
   LogOut, User, Sun, Moon, Globe, RefreshCw, HelpCircle,
   Play, Building2, PanelLeftClose, PanelLeft, SlidersHorizontal,
   Gauge, HardDrive, Network, Zap as Lightning,
-  BellOff, VolumeX, Volume2,
+  BellOff, VolumeX, Volume2, PieChart,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -96,13 +96,19 @@ const navigationItems: NavItem[] = [
     href: '/dashboard',
   },
   {
+    id: 'olts',
+    label: 'OLT Management',
+    icon: <Network className="w-5 h-5 text-cyan-600" />,
+    href: '/olts',
+    badge: 8,
+  },
+  {
     id: 'network',
     label: 'Network',
     icon: <Wifi className="w-5 h-5" />,
     children: [
       { id: 'routers', label: 'Routers', icon: <Server className="w-4 h-4" />, href: '/routers', badge: 24 },
       { id: 'interfaces', label: 'Interfaces', icon: <Activity className="w-4 h-4" />, href: '/interfaces' },
-      { id: 'olts', label: 'OLTs', icon: <Network className="w-4 h-4" />, href: '/olts', badge: 8 },
       { id: 'topology', label: 'Topology', icon: <Globe className="w-4 h-4" />, href: '/topology' },
     ],
   },
@@ -114,6 +120,21 @@ const navigationItems: NavItem[] = [
       { id: 'ppp-users', label: 'PPP Users', icon: <UserCog className="w-4 h-4" />, href: '/ppp', badge: 248 },
       { id: 'hotspot', label: 'Hotspot', icon: <Wifi className="w-4 h-4" />, href: '/hotspot' },
       { id: 'profiles', label: 'Profiles', icon: <Tag className="w-4 h-4" />, href: '/profiles' },
+    ],
+  },
+  {
+    id: 'accounting',
+    label: 'Accounting',
+    icon: <CreditCard className="w-5 h-5 text-emerald-600" />,
+    children: [
+      { id: 'accounting-overview', label: 'Overview', icon: <PieChart className="w-4 h-4" />, href: '/accounting' },
+      { id: 'accounting-invoices', label: 'Invoices', icon: <FileText className="w-4 h-4" />, href: '/accounting/invoices' },
+      { id: 'accounting-payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" />, href: '/accounting/payments' },
+      { id: 'accounting-expenses', label: 'Expenses', icon: <Tag className="w-4 h-4" />, href: '/accounting/expenses' },
+      { id: 'accounting-income', label: 'Income', icon: <TrendingUp className="w-4 h-4" />, href: '/accounting/income' },
+      { id: 'accounting-ledger', label: 'Ledger', icon: <FileText className="w-4 h-4" />, href: '/accounting/ledger' },
+      { id: 'accounting-reconciliation', label: 'Reconciliation', icon: <CheckCircle className="w-4 h-4" />, href: '/accounting/reconciliation' },
+      { id: 'accounting-reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" />, href: '/accounting/reports' },
     ],
   },
   {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardBody, CardHeader, Button } from '@/components';
-import { FileInvoice } from 'lucide-react';
+import { FileText, Receipt } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getStoredToken } from '@/lib/auth/authVerifier';
 

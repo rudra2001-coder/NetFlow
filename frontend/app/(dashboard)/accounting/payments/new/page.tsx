@@ -21,9 +21,11 @@ export default function NewPaymentPage() {
     setLoading(true);
     try {
       const token = getStoredToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch('/api/accounting/payments', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': `Bearer ${token}` } : {}),
+        headers,
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Failed to record payment');
