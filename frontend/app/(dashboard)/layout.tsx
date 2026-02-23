@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Server, Users, UserCog, CreditCard, FileText,
   Settings, Plug, BarChart3, Shield, Activity, Wifi,
-  ChevronDown, ChevronRight, ChevronLeft, Menu, X, Bell,
-  Search, Home, Folder, FolderOpen, Tag, Zap, AlertTriangle,
-  CheckCircle, Clock, TrendingUp, TrendingDown, MoreHorizontal,
-  LogOut, User, Sun, Moon, Globe, RefreshCw, HelpCircle,
+  ChevronDown, ChevronRight, Menu, X, Bell,
+  Search, Tag, Zap, AlertTriangle,
+  CheckCircle, Clock, TrendingUp,
+  LogOut, User, Globe,
+  RefreshCw, HelpCircle,
   Play, Building2, PanelLeftClose, PanelLeft, SlidersHorizontal,
-  Gauge, HardDrive, Network, Zap as Lightning,
-  BellOff, VolumeX, Volume2, PieChart,
+  Gauge, HardDrive, Network,
+  BellOff, VolumeX, PieChart,
+  Router, Antenna, Map, GitFork, Layers, List, Upload,
+  Package, DollarSign, Receipt, BookOpen,
+  Users2, Wallet, ArrowLeftRight, BarChart2,
+  Cpu, Terminal, Repeat, Database, Zap as LightningBolt,
+  Briefcase, Banknote, Calculator, FileCheck, TrendingDown,
+  LifeBuoy, Headphones, Star, MonitorPlay,
+  Lock, UserCheck, LinkIcon, PhoneCall,
+  Sun, Moon, ChevronUp, Boxes, Signal,
+  Landmark, Scale, FileSearch, AlertCircle, OctagonAlert,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -36,8 +46,11 @@ interface NavItem {
   icon: React.ReactNode;
   href?: string;
   badge?: number | string;
+  badgeColor?: string;
+  description?: string;
   children?: NavItem[];
   roles?: UserRole[];
+  dividerAbove?: boolean;
 }
 
 interface Alert {
@@ -47,177 +60,327 @@ interface Alert {
   message: string;
   timestamp: Date;
   acknowledged: boolean;
-  routerId?: string;
 }
 
 // ============================================================================
-// Role-Based Permission Hook
-// ============================================================================
-
-const rolePermissions: Record<UserRole, string[]> = {
-  admin: ['*'],
-  support: ['dashboard', 'routers', 'users', 'tickets', 'alerts'],
-  viewer: ['dashboard', 'metrics'],
-};
-
-function usePermissions() {
-  const [user] = useState<User>({
-    id: 'u1',
-    name: 'Admin User',
-    email: 'admin@netflow',
-    role: 'admin',
-  });
-
-  const hasPermission = useCallback((item: NavItem): boolean => {
-    if (!item.roles || item.roles.includes(user.role)) return true;
-    if (item.children?.some(child => hasPermission(child))) return true;
-    return false;
-  }, [user.role]);
-
-  const filterNavItems = useCallback((items: NavItem[]): NavItem[] => {
-    return items.filter(item => hasPermission(item)).map(item => ({
-      ...item,
-      children: item.children ? filterNavItems(item.children) : undefined,
-    }));
-  }, [hasPermission]);
-
-  return { user, hasPermission, filterNavItems, rolePermissions };
-}
-
-// ============================================================================
-// Navigation Structure - Enhanced
+// Navigation Structure — Hierarchical Module Tree
 // ============================================================================
 
 const navigationItems: NavItem[] = [
+  // ── COMMAND CENTER ──────────────────────────────────────────────────────
   {
     id: 'dashboard',
     label: 'Dashboard',
-    icon: <LayoutDashboard className="w-5 h-5" />,
+    icon: <LayoutDashboard className="w-[18px] h-[18px]" />,
     href: '/dashboard',
+    description: 'Overview & KPIs',
   },
-  {
-    id: 'olts',
-    label: 'OLT Management',
-    icon: <Network className="w-5 h-5 text-cyan-600" />,
-    href: '/olts',
-    badge: 8,
-  },
+
+  // ── NETWORK ──────────────────────────────────────────────────────────────
   {
     id: 'network',
     label: 'Network',
-    icon: <Wifi className="w-5 h-5" />,
+    icon: <Network className="w-[18px] h-[18px]" />,
+    description: 'Infrastructure & Topology',
     children: [
-      { id: 'routers', label: 'Routers', icon: <Server className="w-4 h-4" />, href: '/routers', badge: 24 },
-      { id: 'interfaces', label: 'Interfaces', icon: <Activity className="w-4 h-4" />, href: '/interfaces' },
-      { id: 'topology', label: 'Topology', icon: <Globe className="w-4 h-4" />, href: '/topology' },
+      {
+        id: 'routers',
+        label: 'Routers',
+        icon: <Router className="w-4 h-4" />,
+        href: '/routers',
+        badge: 24,
+        badgeColor: 'bg-blue-500',
+        description: 'MikroTik device management',
+      },
+      {
+        id: 'olts',
+        label: 'OLT Management',
+        icon: <Antenna className="w-4 h-4" />,
+        href: '/olts',
+        badge: 8,
+        badgeColor: 'bg-cyan-500',
+        description: 'Optical line terminals',
+      },
+      {
+        id: 'interfaces',
+        label: 'Interfaces',
+        icon: <Signal className="w-4 h-4" />,
+        href: '/interfaces',
+        description: 'Physical & logical ports',
+      },
+      {
+        id: 'topology',
+        label: 'Topology',
+        icon: <GitFork className="w-4 h-4" />,
+        href: '/topology',
+        description: 'Visual network diagram',
+      },
+      {
+        id: 'geo-maps',
+        label: 'Geo Maps',
+        icon: <Map className="w-4 h-4" />,
+        href: '/topology',
+        description: 'Geographic coverage map',
+      },
     ],
   },
+
+  // ── MIKROTEK ──────────────────────────────────────────────────────────────
   {
-    id: 'users',
-    label: 'Users',
-    icon: <Users className="w-5 h-5" />,
+    id: 'mikrotek',
+    label: 'MikroTik',
+    icon: <Cpu className="w-[18px] h-[18px]" />,
+    description: 'RouterOS management',
     children: [
-      { id: 'ppp-users', label: 'PPP Users', icon: <UserCog className="w-4 h-4" />, href: '/ppp', badge: 248 },
-      { id: 'hotspot', label: 'Hotspot', icon: <Wifi className="w-4 h-4" />, href: '/hotspot' },
-      { id: 'profiles', label: 'Profiles', icon: <Tag className="w-4 h-4" />, href: '/profiles' },
+      {
+        id: 'ppp-users',
+        label: 'PPP Users',
+        icon: <Users className="w-4 h-4" />,
+        href: '/ppp',
+        badge: 248,
+        badgeColor: 'bg-violet-500',
+        description: 'PPPoE sessions',
+      },
+      {
+        id: 'hotspot',
+        label: 'Hotspot',
+        icon: <Wifi className="w-4 h-4" />,
+        href: '/hotspot',
+        description: 'Hotspot users & sessions',
+      },
+      {
+        id: 'profiles',
+        label: 'Speed Profiles',
+        icon: <Layers className="w-4 h-4" />,
+        href: '/profiles',
+        description: 'Bandwidth templates',
+      },
+      {
+        id: 'critique-list',
+        label: 'Critique List',
+        icon: <List className="w-4 h-4" />,
+        href: '/ppp',
+        badge: 'NEW',
+        badgeColor: 'bg-orange-500',
+        description: 'Problem device audit',
+      },
+      {
+        id: 'bulk-import',
+        label: 'Bulk Import',
+        icon: <Upload className="w-4 h-4" />,
+        href: '/ppp',
+        description: 'CSV / API bulk import',
+      },
+      {
+        id: 'terminal',
+        label: 'Terminal',
+        icon: <Terminal className="w-4 h-4" />,
+        href: '/dashboard/command-center',
+        description: 'SSH command center',
+      },
     ],
   },
+
+  // ── CUSTOMERS ────────────────────────────────────────────────────────────
   {
-    id: 'accounting',
-    label: 'Accounting',
-    icon: <CreditCard className="w-5 h-5 text-emerald-600" />,
+    id: 'customers',
+    label: 'Customers',
+    icon: <Users2 className="w-[18px] h-[18px]" />,
+    description: 'Subscriber management',
     children: [
-      { id: 'accounting-overview', label: 'Overview', icon: <PieChart className="w-4 h-4" />, href: '/accounting' },
-      { id: 'accounting-invoices', label: 'Invoices', icon: <FileText className="w-4 h-4" />, href: '/accounting/invoices' },
-      { id: 'accounting-payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" />, href: '/accounting/payments' },
-      { id: 'accounting-expenses', label: 'Expenses', icon: <Tag className="w-4 h-4" />, href: '/accounting/expenses' },
-      { id: 'accounting-income', label: 'Income', icon: <TrendingUp className="w-4 h-4" />, href: '/accounting/income' },
-      { id: 'accounting-ledger', label: 'Ledger', icon: <FileText className="w-4 h-4" />, href: '/accounting/ledger' },
-      { id: 'accounting-reconciliation', label: 'Reconciliation', icon: <CheckCircle className="w-4 h-4" />, href: '/accounting/reconciliation' },
-      { id: 'accounting-reports', label: 'Reports', icon: <BarChart3 className="w-4 h-4" />, href: '/accounting/reports' },
+      {
+        id: 'resellers',
+        label: 'Resellers',
+        icon: <Building2 className="w-4 h-4" />,
+        href: '/resellers',
+        badge: 28,
+        badgeColor: 'bg-emerald-500',
+        description: 'Partner network',
+      },
+      {
+        id: 'packages',
+        label: 'Packages',
+        icon: <Package className="w-4 h-4" />,
+        href: '/resellers/packages',
+        description: 'Service plans',
+      },
+      {
+        id: 'tariffs',
+        label: 'Tariffs',
+        icon: <Tag className="w-4 h-4" />,
+        href: '/resellers/tariffs',
+        description: 'Pricing structures',
+      },
     ],
   },
+
+  // ── BILLING & FINANCE ────────────────────────────────────────────────────
   {
-    id: 'resellers',
-    label: 'Resellers',
-    icon: <Building2 className="w-5 h-5" />,
-    href: '/resellers',
-    badge: 28,
+    id: 'billing-finance',
+    label: 'Billing & Finance',
+    icon: <Landmark className="w-[18px] h-[18px]" />,
+    description: 'Revenue operations',
+    children: [
+      {
+        id: 'billing',
+        label: 'Billing',
+        icon: <Receipt className="w-4 h-4" />,
+        href: '/billing',
+        badge: 12,
+        badgeColor: 'bg-orange-500',
+        description: 'Invoice generation',
+      },
+      {
+        id: 'accounting',
+        label: 'Accounting',
+        icon: <Calculator className="w-4 h-4" />,
+        href: '/accounting',
+        description: 'Ledger & reconciliation',
+        children: [
+          { id: 'acc-invoices', label: 'Invoices', icon: <FileText className="w-3.5 h-3.5" />, href: '/accounting/invoices', description: 'Issue & track invoices' },
+          { id: 'acc-payments', label: 'Payments', icon: <CreditCard className="w-3.5 h-3.5" />, href: '/accounting/payments', description: 'Payment collection' },
+          { id: 'acc-expenses', label: 'Expenses', icon: <TrendingDown className="w-3.5 h-3.5" />, href: '/accounting/expenses', description: 'Expense tracking' },
+          { id: 'acc-income', label: 'Income', icon: <TrendingUp className="w-3.5 h-3.5" />, href: '/accounting/income', description: 'Revenue records' },
+          { id: 'acc-ledger', label: 'Ledger', icon: <BookOpen className="w-3.5 h-3.5" />, href: '/accounting/ledger', description: 'General ledger' },
+          { id: 'acc-reconciliation', label: 'Reconciliation', icon: <ArrowLeftRight className="w-3.5 h-3.5" />, href: '/accounting/reconciliation', description: 'Bank matching' },
+        ],
+      },
+      {
+        id: 'reseller-funds',
+        label: 'Reseller Funds',
+        icon: <Wallet className="w-4 h-4" />,
+        href: '/resellers/funds',
+        description: 'Partner balances',
+      },
+      {
+        id: 'settlements',
+        label: 'Settlements',
+        icon: <Scale className="w-4 h-4" />,
+        href: '/resellers/settlements',
+        description: 'Partner settlements',
+      },
+    ],
   },
+
+  // ── ANALYTICS & REPORTS ──────────────────────────────────────────────────
   {
-    id: 'billing',
-    label: 'Billing',
-    icon: <CreditCard className="w-5 h-5" />,
-    href: '/billing',
-    badge: 12,
-  },
-  {
-    id: 'analytics',
+    id: 'analytics-group',
     label: 'Analytics',
-    icon: <BarChart3 className="w-5 h-5" />,
+    icon: <BarChart3 className="w-[18px] h-[18px]" />,
+    description: 'Insights & forecasts',
     children: [
-      { id: 'traffic', label: 'Traffic Analysis', icon: <TrendingUp className="w-4 h-4" />, href: '/analytics/traffic' },
-      { id: 'capacity', label: 'Capacity Forecast', icon: <Gauge className="w-4 h-4" />, href: '/analytics/capacity' },
+      {
+        id: 'analytics-traffic',
+        label: 'Traffic Analysis',
+        icon: <TrendingUp className="w-4 h-4" />,
+        href: '/analytics/traffic',
+        description: 'Throughput monitoring',
+      },
+      {
+        id: 'analytics-capacity',
+        label: 'Capacity Forecast',
+        icon: <Gauge className="w-4 h-4" />,
+        href: '/analytics/capacity',
+        description: 'Load planning',
+      },
+      {
+        id: 'reports',
+        label: 'Reports',
+        icon: <FileSearch className="w-4 h-4" />,
+        href: '/reports',
+        description: 'Scheduled & custom reports',
+      },
+      {
+        id: 'compliance',
+        label: 'Compliance',
+        icon: <Shield className="w-4 h-4" />,
+        href: '/compliance',
+        description: 'Audit & regulatory',
+      },
     ],
   },
+
+  // ── AUTOMATION ───────────────────────────────────────────────────────────
   {
     id: 'automation',
     label: 'Automation',
-    icon: <Zap className="w-5 h-5" />,
+    icon: <Repeat className="w-[18px] h-[18px]" />,
+    description: 'Scripts & scheduling',
     children: [
-      { id: 'templates', label: 'Templates', icon: <FileText className="w-4 h-4" />, href: '/templates' },
-      { id: 'rules', label: 'Rules', icon: <Settings className="w-4 h-4" />, href: '/rules' },
-      { id: 'executions', label: 'Executions', icon: <Play className="w-4 h-4" />, href: '/executions' },
+      { id: 'templates', label: 'Templates', icon: <FileText className="w-4 h-4" />, href: '/templates', description: 'Config templates' },
+      { id: 'rules', label: 'Rules Engine', icon: <Settings className="w-4 h-4" />, href: '/rules', description: 'Trigger conditions' },
+      { id: 'executions', label: 'Executions', icon: <Play className="w-4 h-4" />, href: '/executions', description: 'Run history' },
     ],
   },
-  {
-    id: 'compliance',
-    label: 'Compliance',
-    icon: <Shield className="w-5 h-5" />,
-    href: '/compliance',
-  },
-  {
-    id: 'reports',
-    label: 'Reports',
-    icon: <FileText className="w-5 h-5" />,
-    href: '/reports',
-  },
+
+  // ── HR & PAYROLL ─────────────────────────────────────────────────────────
   {
     id: 'hr',
     label: 'HR & Payroll',
-    icon: <Users className="w-5 h-5 text-purple-500" />,
+    icon: <Briefcase className="w-[18px] h-[18px]" />,
+    description: 'Human resources',
     children: [
-      { id: 'hr-payroll', label: 'Payroll Hub', icon: <CreditCard className="w-4 h-4" />, href: '/hr/payroll' },
-      { id: 'hr-process', label: 'Processing Hub', icon: <Zap className="w-4 h-4" />, href: '/hr/process' },
-      { id: 'hr-directory', label: 'Employee Catalog', icon: <UserCog className="w-4 h-4" />, href: '/hr/directory' },
-      { id: 'hr-salary', label: 'Salary Matrix', icon: <Tag className="w-4 h-4" />, href: '/hr/salary' },
+      { id: 'hr-payroll', label: 'Payroll Hub', icon: <Banknote className="w-4 h-4" />, href: '/hr/payroll', description: 'Salary disbursements' },
+      { id: 'hr-process', label: 'Processing Hub', icon: <Zap className="w-4 h-4" />, href: '/hr/process', description: 'Payroll processing' },
+      { id: 'hr-directory', label: 'Employee Catalog', icon: <UserCog className="w-4 h-4" />, href: '/hr/directory', description: 'Staff directory' },
+      { id: 'hr-salary', label: 'Salary Matrix', icon: <BarChart2 className="w-4 h-4" />, href: '/hr/salary', description: 'Compensation bands' },
     ],
   },
+
+  // ── SUPPORT ──────────────────────────────────────────────────────────────
   {
     id: 'support-group',
-    label: 'Support & Tickets',
-    icon: <HelpCircle className="w-5 h-5 text-indigo-500" />,
+    label: 'Support',
+    icon: <Headphones className="w-[18px] h-[18px]" />,
     badge: 3,
+    badgeColor: 'bg-red-500',
+    description: 'Tickets & helpdesk',
     children: [
-      { id: 'support-dash', label: 'Support Pulse', icon: <Activity className="w-4 h-4" />, href: '/support' },
-      { id: 'support-tickets', label: 'Ticket Hub', icon: <FileText className="w-4 h-4" />, href: '/support/tickets' },
-      { id: 'support-performance', label: 'Staff Analytics', icon: <BarChart3 className="w-4 h-4" />, href: '/support/performance' },
+      { id: 'support-dash', label: 'Support Pulse', icon: <Activity className="w-4 h-4" />, href: '/support', description: 'Live support metrics' },
+      { id: 'support-tickets', label: 'Ticket Hub', icon: <HelpCircle className="w-4 h-4" />, href: '/support/tickets', badge: 3, badgeColor: 'bg-red-500', description: 'Open tickets' },
+      { id: 'support-performance', label: 'Staff Analytics', icon: <Star className="w-4 h-4" />, href: '/support/performance', description: 'Agent performance' },
     ],
   },
+
+  // ── SETTINGS ─────────────────────────────────────────────────────────────
   {
     id: 'settings',
     label: 'Settings',
-    icon: <Settings className="w-5 h-5" />,
+    icon: <Settings className="w-[18px] h-[18px]" />,
+    description: 'System configuration',
+    dividerAbove: true,
     children: [
-      { id: 'system', label: 'System Governance', icon: <Shield className="w-4 h-4" />, href: '/settings/system' },
-      { id: 'users-settings', label: 'Staff Directory', icon: <UserCog className="w-4 h-4" />, href: '/settings/users' },
-      { id: 'integrations', label: 'Integrations Hub', icon: <Plug className="w-4 h-4" />, href: '/settings/integrations' },
+      { id: 'settings-system', label: 'System', icon: <Shield className="w-4 h-4" />, href: '/settings/system', description: 'Core configuration' },
+      { id: 'settings-users', label: 'Users & Access', icon: <UserCheck className="w-4 h-4" />, href: '/settings/users', description: 'Staff accounts' },
+      { id: 'settings-integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, href: '/settings/integrations', description: 'API & webhooks' },
     ],
   },
 ];
 
 // ============================================================================
-// Enhanced Navigation Item Component
+// Utility
+// ============================================================================
+
+function getActiveParentIds(items: NavItem[], activeHref: string): Set<string> {
+  const active = new Set<string>();
+  const walk = (items: NavItem[], parentId?: string): boolean => {
+    for (const item of items) {
+      const selfMatch = item.href && (activeHref === item.href || activeHref.startsWith(item.href + '/'));
+      const childMatch = item.children ? walk(item.children, item.id) : false;
+      if (selfMatch || childMatch) {
+        if (parentId) active.add(parentId);
+        active.add(item.id);
+        return true;
+      }
+    }
+    return false;
+  };
+  walk(items);
+  return active;
+}
+
+// ============================================================================
+// NavItem Component – Recursive with 3-level support
 // ============================================================================
 
 function NavItemComponent({
@@ -225,102 +388,140 @@ function NavItemComponent({
   depth = 0,
   collapsed,
   activeHref,
+  activeIds,
   onNavigate,
 }: {
   item: NavItem;
   depth?: number;
   collapsed: boolean;
   activeHref: string;
+  activeIds: Set<string>;
   onNavigate: (href: string) => void;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const hasChildren = item.children && item.children.length > 0;
-  const isActive = activeHref === item.href;
+  const hasChildren = !!item.children?.length;
+  const isActive = !!item.href && (activeHref === item.href || activeHref.startsWith(item.href + '/'));
+  const isAncestorActive = activeIds.has(item.id) && !isActive;
+  const [expanded, setExpanded] = useState(false);
 
-  // Auto-expand parent when child is active
+  // Auto-expand when a descendant is active
   useEffect(() => {
-    if (hasChildren && item.children) {
-      const activeChild = item.children.find(
-        child => child.href && activeHref.startsWith(child.href)
-      );
-      if (activeChild && !isExpanded) {
-        setIsExpanded(true);
-      }
+    if (activeIds.has(item.id)) {
+      setExpanded(true);
     }
-  }, [activeHref, hasChildren, item.children, isExpanded]);
+  }, [activeIds, item.id]);
+
+  if (collapsed && depth > 0) return null;
+
+  const indent = depth === 0 ? '' : depth === 1 ? 'ml-3' : 'ml-6';
 
   const handleClick = () => {
-    if (hasChildren) {
-      setIsExpanded(!isExpanded);
-    } else if (item.href) {
-      onNavigate(item.href);
-    }
+    if (hasChildren) setExpanded(v => !v);
+    else if (item.href) onNavigate(item.href);
   };
 
-  if (collapsed && depth > 0) {
-    return null;
-  }
-
-  // Badge color mapping
-  const getBadgeColor = (badge: number | string) => {
-    const num = typeof badge === 'string' ? parseInt(badge) : badge;
-    if (num > 100) return 'bg-blue-500';
-    if (num > 50) return 'bg-cyan-500';
-    if (num > 10) return 'bg-green-500';
-    return 'bg-orange-500';
+  // ── Visual tokens by depth
+  const depthStyles = {
+    0: {
+      button: cn(
+        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+        'group relative overflow-hidden',
+        isActive
+          ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25'
+          : isAncestorActive
+            ? 'bg-slate-800/60 text-slate-200'
+            : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-100',
+        collapsed && 'justify-center px-2'
+      ),
+    },
+    1: {
+      button: cn(
+        'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150',
+        isActive
+          ? 'bg-blue-500/15 text-blue-300 border-l-2 border-blue-400'
+          : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/40',
+      ),
+    },
+    2: {
+      button: cn(
+        'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-150',
+        isActive
+          ? 'text-blue-400 bg-blue-500/10'
+          : 'text-slate-600 hover:text-slate-400 hover:bg-slate-800/30',
+      ),
+    },
   };
+
+  const btnClass = depthStyles[Math.min(depth, 2) as 0 | 1 | 2].button;
 
   return (
-    <div className="relative">
-      <button
-        onClick={handleClick}
-        className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-          'hover:bg-slate-100 dark:hover:bg-slate-800 hover:translate-x-1',
-          isActive
-            ? 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/20 text-blue-700 dark:text-blue-300 font-medium shadow-sm shadow-blue-500/10'
-            : 'text-slate-600 dark:text-slate-400',
-          collapsed && depth === 0 && 'justify-center hover:translate-x-0 group'
+    <div className={cn('relative', indent)}>
+      {/* Divider */}
+      {item.dividerAbove && depth === 0 && (
+        <div className="h-px bg-slate-800/80 my-3 mx-1" />
+      )}
+
+      <button onClick={handleClick} className={btnClass} title={collapsed ? item.label : undefined}>
+        {/* Active glow for top-level */}
+        {depth === 0 && isActive && (
+          <span className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-500/10 rounded-xl pointer-events-none" />
         )}
-      >
+
+        {/* Icon */}
         <span className={cn(
-          'flex-shrink-0 transition-colors duration-200',
-          isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+          'flex-shrink-0 transition-colors',
+          isActive && depth === 0 ? 'text-white' : '',
+          isActive && depth > 0 ? 'text-blue-400' : '',
         )}>
           {item.icon}
         </span>
 
-        {!collapsed && (
+        {/* Label area */}
+        {(!collapsed || depth > 0) && (
           <>
-            <span className="flex-1 text-left truncate text-sm">{item.label}</span>
-            {item.badge && (
+            <span className="flex-1 text-left truncate leading-none">{item.label}</span>
+            {/* Badge */}
+            {item.badge !== undefined && (
               <span className={cn(
-                'px-2 py-0.5 text-xs font-semibold rounded-full text-white',
-                getBadgeColor(item.badge)
+                'px-1.5 py-0.5 text-[10px] font-bold rounded-full text-white flex-shrink-0',
+                item.badgeColor ?? 'bg-blue-500'
               )}>
                 {item.badge}
               </span>
             )}
+            {/* Expand arrow */}
             {hasChildren && (
               <ChevronRight className={cn(
-                'w-4 h-4 transition-transform duration-150 flex-shrink-0 text-slate-400',
-                isExpanded && 'rotate-90'
+                'w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 text-slate-600',
+                expanded && 'rotate-90',
               )} />
             )}
           </>
         )}
+
+        {/* Collapsed top-level badge dot */}
+        {collapsed && depth === 0 && item.badge !== undefined && (
+          <span className={cn(
+            'absolute top-0.5 right-0.5 w-2 h-2 rounded-full',
+            item.badgeColor ?? 'bg-blue-500'
+          )} />
+        )}
       </button>
 
       {/* Children */}
-      {hasChildren && isExpanded && !collapsed && (
-        <div className="mt-1 space-y-1 ml-4 pl-3 border-l border-slate-200 dark:border-slate-700">
-          {item.children?.map(child => (
+      {hasChildren && expanded && !collapsed && (
+        <div className={cn(
+          'mt-0.5 space-y-0.5 overflow-hidden',
+          depth === 0 && 'border-l border-slate-800/80 ml-[22px] pl-2 pb-1 pt-0.5',
+          depth === 1 && 'border-l border-slate-800/50 ml-[18px] pl-2 pb-0.5',
+        )}>
+          {item.children!.map(child => (
             <NavItemComponent
               key={child.id}
               item={child}
               depth={depth + 1}
-              collapsed={collapsed}
+              collapsed={false}
               activeHref={activeHref}
+              activeIds={activeIds}
               onNavigate={onNavigate}
             />
           ))}
@@ -331,7 +532,22 @@ function NavItemComponent({
 }
 
 // ============================================================================
-// Enhanced Sidebar Component
+// Module Group Label (section headers)
+// ============================================================================
+
+function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) return <div className="h-3" />;
+  return (
+    <div className="px-3 pt-4 pb-1">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600 select-none">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+// ============================================================================
+// Sidebar Component
 // ============================================================================
 
 function Sidebar({
@@ -339,7 +555,6 @@ function Sidebar({
   mobileOpen,
   onToggleMobile,
   onToggleCollapse,
-  filteredNav,
   activeHref,
   onNavigate,
 }: {
@@ -347,121 +562,121 @@ function Sidebar({
   mobileOpen: boolean;
   onToggleMobile: () => void;
   onToggleCollapse: () => void;
-  filteredNav: NavItem[];
   activeHref: string;
   onNavigate: (href: string) => void;
 }) {
+  const activeIds = useMemo(() => getActiveParentIds(navigationItems, activeHref), [activeHref]);
+
+  // Group the navigation items for section labels
+  const sections: { label: string; items: NavItem[] }[] = [
+    { label: '', items: navigationItems.filter(i => i.id === 'dashboard') },
+    { label: 'Infrastructure', items: navigationItems.filter(i => ['network', 'mikrotek'].includes(i.id)) },
+    { label: 'Business', items: navigationItems.filter(i => ['customers', 'billing-finance'].includes(i.id)) },
+    { label: 'Operations', items: navigationItems.filter(i => ['analytics-group', 'automation'].includes(i.id)) },
+    { label: 'Organization', items: navigationItems.filter(i => ['hr', 'support-group'].includes(i.id)) },
+    { label: 'System', items: navigationItems.filter(i => ['settings'].includes(i.id)) },
+  ];
+
   return (
     <>
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
           onClick={onToggleMobile}
         />
       )}
 
       {/* Sidebar */}
       <aside className={cn(
-        'fixed top-0 left-0 z-50 h-screen bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800',
-        'transition-all duration-300 ease-in-out flex flex-col',
-        collapsed ? 'w-20' : 'w-72',
+        'fixed top-0 left-0 z-50 h-screen flex flex-col',
+        'bg-[#0d1117] border-r border-slate-800/60',
+        'transition-all duration-300 ease-in-out',
+        collapsed ? 'w-[68px]' : 'w-[260px]',
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}>
-        {/* Logo */}
+
+        {/* Logo Area */}
         <div className={cn(
-          'h-20 flex items-center px-4 border-b border-slate-200 dark:border-slate-800',
-          collapsed ? 'justify-center' : 'justify-between'
+          'h-16 flex items-center border-b border-slate-800/60 flex-shrink-0',
+          collapsed ? 'justify-center px-2' : 'justify-between px-4',
         )}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
+              <Activity className="w-5 h-5 text-white" />
+            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <h1 className="font-bold text-[15px] text-white leading-none">NetFlow</h1>
+                <p className="text-[10px] text-slate-500 leading-none mt-0.5">ISP Operating System</p>
+              </div>
+            )}
+          </div>
           {!collapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <Activity className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="font-bold text-xl text-slate-900 dark:text-white">NetFlow</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">ISP Operating System</p>
-              </div>
-            </div>
+            <button
+              onClick={mobileOpen ? onToggleMobile : onToggleCollapse}
+              className="p-1.5 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-slate-800/60 transition-colors lg:flex"
+            >
+              <X className="w-4 h-4 lg:hidden" />
+              <PanelLeftClose className="w-4 h-4 hidden lg:block" />
+            </button>
           )}
-
           {collapsed && (
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
+            <button
+              onClick={onToggleCollapse}
+              className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 border border-slate-700 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors shadow-lg"
+            >
+              <ChevronRight className="w-3 h-3" />
+            </button>
           )}
-
-          <button
-            onClick={mobileOpen ? onToggleMobile : onToggleCollapse}
-            className={cn(
-              'p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800',
-              'text-slate-500 transition-colors',
-              !collapsed && 'lg:hidden'
-            )}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Collapse Toggle Button */}
-        <div className="hidden lg:flex px-4 py-2">
-          <button
-            onClick={onToggleCollapse}
-            className={cn(
-              'w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg',
-              'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300',
-              'hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200',
-              collapsed && 'justify-center'
-            )}
-          >
-            {collapsed ? (
-              <PanelLeft className="w-5 h-5" />
-            ) : (
-              <>
-                <PanelLeftClose className="w-5 h-5" />
-                <span className="text-sm font-medium">Collapse</span>
-              </>
-            )}
-          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
-          {filteredNav.map(item => (
-            <NavItemComponent
-              key={item.id}
-              item={item}
-              collapsed={collapsed}
-              activeHref={activeHref}
-              onNavigate={onNavigate}
-            />
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          {sections.map((section, si) => (
+            <div key={si}>
+              {section.label && <SectionLabel label={section.label} collapsed={collapsed} />}
+              {section.items.map(item => (
+                <NavItemComponent
+                  key={item.id}
+                  item={item}
+                  collapsed={collapsed}
+                  activeHref={activeHref}
+                  activeIds={activeIds}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
           ))}
         </nav>
 
         {/* User Profile */}
         <div
           className={cn(
-            'p-4 border-t border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors',
-            collapsed && 'justify-center'
+            'border-t border-slate-800/60 p-3 cursor-pointer',
+            'hover:bg-slate-800/40 transition-colors flex-shrink-0',
+            collapsed ? 'flex justify-center' : 'flex items-center gap-3',
           )}
           onClick={() => onNavigate('/profile')}
         >
-          <div className={cn(
-            'flex items-center gap-3',
-            collapsed && 'justify-center'
-          )}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/30 flex items-center justify-center">
-              <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                  Admin User
-                </p>
-                <p className="text-xs text-slate-500 capitalize">Administrator</p>
-              </div>
-            )}
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <User className="w-4 h-4 text-blue-400" />
           </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-200 truncate leading-none">Admin User</p>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-none">Administrator</p>
+            </div>
+          )}
+          {!collapsed && (
+            <button
+              title="Logout"
+              className="p-1.5 rounded-lg text-slate-700 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              onClick={(e) => { e.stopPropagation(); }}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </aside>
     </>
@@ -469,200 +684,86 @@ function Sidebar({
 }
 
 // ============================================================================
-// Quick Settings Panel (Right Side)
+// Breadcrumb
 // ============================================================================
 
-function QuickSettingsPanel({
-  isOpen,
-  onToggle,
-}: {
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
-  const [settings, setSettings] = useState({
-    darkMode: false,
-    notifications: true,
-    sound: true,
-    compactMode: false,
-  });
+function Breadcrumb({ pathname }: { pathname: string }) {
+  const segments = pathname.split('/').filter(Boolean);
 
-  const toggleSetting = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const labelMap: Record<string, string> = {
+    dashboard: 'Dashboard',
+    routers: 'Routers',
+    olts: 'OLT Management',
+    interfaces: 'Interfaces',
+    topology: 'Topology',
+    ppp: 'PPP Users',
+    hotspot: 'Hotspot',
+    profiles: 'Profiles',
+    resellers: 'Resellers',
+    billing: 'Billing',
+    accounting: 'Accounting',
+    invoices: 'Invoices',
+    payments: 'Payments',
+    expenses: 'Expenses',
+    income: 'Income',
+    ledger: 'Ledger',
+    reconciliation: 'Reconciliation',
+    reports: 'Reports',
+    analytics: 'Analytics',
+    traffic: 'Traffic',
+    capacity: 'Capacity',
+    compliance: 'Compliance',
+    automation: 'Automation',
+    templates: 'Templates',
+    rules: 'Rules',
+    executions: 'Executions',
+    hr: 'HR',
+    payroll: 'Payroll',
+    process: 'Processing',
+    directory: 'Directory',
+    salary: 'Salary',
+    support: 'Support',
+    tickets: 'Tickets',
+    performance: 'Performance',
+    settings: 'Settings',
+    system: 'System',
+    users: 'Users',
+    integrations: 'Integrations',
+    profile: 'Profile',
+    funds: 'Funds',
+    packages: 'Packages',
+    tariffs: 'Tariffs',
+    settlements: 'Settlements',
+    noc: 'NOC',
+    'enhanced-noc': 'Enhanced NOC',
+    'enterprise-noc': 'Enterprise NOC',
+    'command-center': 'Command Center',
   };
 
   return (
-    <>
-      {/* Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-
-      {/* Quick Settings Panel */}
-      <aside className={cn(
-        'fixed top-0 right-0 z-50 h-screen w-80 max-w-[calc(100vw-2rem)]',
-        'bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800',
-        'shadow-2xl transform transition-transform duration-300 ease-in-out',
-        'flex flex-col',
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      )}>
-        {/* Header */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/30 flex items-center justify-center">
-              <SlidersHorizontal className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Quick Settings
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Customize your view
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onToggle}
-            className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Quick Actions */}
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">
-              Quick Actions
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { icon: <HardDrive className="w-5 h-5" />, label: 'System', color: 'bg-emerald-500' },
-                { icon: <Network className="w-5 h-5" />, label: 'Network', color: 'bg-blue-500' },
-                { icon: <Lightning className="w-5 h-5" />, label: 'Power', color: 'bg-amber-500' },
-              ].map((action, idx) => (
-                <button
-                  key={idx}
-                  className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
-                >
-                  <div className={`${action.color} p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform`}>
-                    {action.icon}
-                  </div>
-                  <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Appearance */}
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-              Appearance
-            </h3>
-            <div className="space-y-2">
-              {[
-                { id: 'darkMode', label: 'Dark Mode', description: 'Switch to dark theme', icon: Moon, altIcon: Sun },
-                { id: 'compactMode', label: 'Compact Mode', description: 'Reduce spacing', icon: LayoutDashboard },
-              ].map((item) => {
-                const Icon = settings[item.id as keyof typeof settings] && (item as any).altIcon ? (item as any).altIcon : item.icon;
-                const isActive = settings[item.id as keyof typeof settings];
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => toggleSetting(item.id as keyof typeof settings)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
-                      isActive ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                    )}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.description}</p>
-                    </div>
-                    <div className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      isActive ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
-                    )}>
-                      <span className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        isActive ? 'translate-x-6' : 'translate-x-1'
-                      )} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Notifications */}
-          <div>
-            <h3 className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
-              Notifications
-            </h3>
-            <div className="space-y-2">
-              {[
-                { id: 'notifications', label: 'Push Notifications', description: 'Browser notifications', icon: Bell, altIcon: BellOff },
-                { id: 'sound', label: 'Sound Effects', description: 'Audio alerts', icon: Zap, altIcon: VolumeX },
-              ].map((item) => {
-                const Icon = settings[item.id as keyof typeof settings] ? (item as any).icon : (item as any).altIcon || (item as any).icon;
-                const isActive = settings[item.id as keyof typeof settings];
-                
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => toggleSetting(item.id as keyof typeof settings)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
-                      isActive ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                    )}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">{item.label}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.description}</p>
-                    </div>
-                    <div className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      isActive ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'
-                    )}>
-                      <span className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        isActive ? 'translate-x-6' : 'translate-x-1'
-                      )} />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>NetFlow v2.1.0</span>
-            <div className="flex items-center gap-3">
-              <button className="hover:text-blue-500 transition-colors">Help</button>
-              <button className="hover:text-blue-500 transition-colors">Privacy</button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </>
+    <nav className="flex items-center gap-1 text-sm">
+      <button className="text-slate-500 hover:text-slate-300 transition-colors">
+        <LayoutDashboard className="w-3.5 h-3.5" />
+      </button>
+      {segments.map((seg, i) => (
+        <React.Fragment key={i}>
+          <ChevronRight className="w-3 h-3 text-slate-700" />
+          <span className={cn(
+            'transition-colors',
+            i === segments.length - 1
+              ? 'text-slate-300 font-medium'
+              : 'text-slate-600 hover:text-slate-400 cursor-pointer'
+          )}>
+            {labelMap[seg] ?? seg}
+          </span>
+        </React.Fragment>
+      ))}
+    </nav>
   );
 }
 
 // ============================================================================
-// Enhanced Header Component
+// Header Component
 // ============================================================================
 
 function Header({
@@ -672,125 +773,120 @@ function Header({
   setShowNotifications,
   acknowledgeAlert,
   onProfileClick,
-  onQuickSettingsClick,
+  collapsed,
 }: {
   onMenuClick: () => void;
   notifications: Alert[];
   showNotifications: boolean;
-  setShowNotifications: (show: boolean) => void;
+  setShowNotifications: (v: boolean) => void;
   acknowledgeAlert: (id: string) => void;
   onProfileClick: () => void;
-  onQuickSettingsClick: () => void;
+  collapsed: boolean;
 }) {
+  const pathname = usePathname();
   const criticalCount = notifications.filter(n => n.severity === 'critical' && !n.acknowledged).length;
+  const unreadCount = notifications.filter(n => !n.acknowledged).length;
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-72 h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 z-30 flex items-center justify-between px-4 lg:px-6">
-      {/* Left: Menu Toggle + Search */}
-      <div className="flex items-center gap-4 flex-1">
+    <header className={cn(
+      'fixed top-0 right-0 z-30 h-16',
+      'bg-[#0d1117]/90 backdrop-blur-xl border-b border-slate-800/60',
+      'flex items-center justify-between px-4 gap-4',
+      'transition-all duration-300',
+      collapsed ? 'left-[68px]' : 'left-[260px]',
+      'left-0 lg:left-[260px]',
+      collapsed && 'lg:left-[68px]',
+    )}>
+      {/* Left: Menu + Breadcrumb */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         <button
           onClick={onMenuClick}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-colors lg:hidden flex-shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
+        <div className="hidden md:flex min-w-0">
+          <Breadcrumb pathname={pathname} />
+        </div>
+      </div>
 
-        {/* Search */}
-        <div className="relative hidden md:block flex-1 max-w-lg">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Center: Search */}
+      <div className="flex-1 max-w-sm hidden md:block">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
           <input
             type="text"
-            placeholder="Search routers, users, alerts..."
-            className="w-full pl-12 pr-20 py-2.5 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-slate-700 transition-all"
+            readOnly
+            placeholder="Search modules, users, alerts…"
+            className="w-full pl-9 pr-14 py-2 bg-slate-800/60 border border-slate-700/40 rounded-xl text-[13px] text-slate-400 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500/50 cursor-pointer transition-all"
           />
-          <kbd className="absolute right-4 top-1/2 -translate-y-1/2 px-2.5 py-1 text-xs font-medium text-slate-400 bg-white dark:bg-slate-600 rounded-lg border border-slate-200 dark:border-slate-500">
+          <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 bg-slate-800 rounded border border-slate-700">
             ⌘K
           </kbd>
         </div>
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2">
-        {/* Quick Actions */}
-        <button className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden lg:inline">Sync All</span>
-        </button>
-
-        {/* Quick Settings Toggle */}
-        <button
-          onClick={onQuickSettingsClick}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          title="Quick Settings"
-        >
-          <SlidersHorizontal className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Sync */}
+        <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span className="hidden lg:inline">Sync</span>
         </button>
 
         {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="relative p-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-colors"
           >
-            <Bell className="w-5 h-5 text-slate-600 dark:text-slate-300" />
-            {criticalCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-2 ring-white dark:ring-slate-900" />
+            <Bell className="w-4.5 h-4.5" />
+            {unreadCount > 0 && (
+              <span className={cn(
+                'absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-[#0d1117]',
+                criticalCount > 0 ? 'bg-red-500 animate-pulse' : 'bg-blue-500'
+              )} />
             )}
           </button>
 
-          {/* Notifications Panel */}
           {showNotifications && (
             <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowNotifications(false)}
-              />
-              <div className="absolute right-0 top-full mt-3 w-96 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 z-50 animate-scaleIn overflow-hidden">
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Notifications</h3>
-                  <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                    Mark all read
-                  </button>
+              <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+              <div className="absolute right-0 top-full mt-2 w-80 bg-[#161b22] border border-slate-800/80 rounded-2xl shadow-2xl z-50 overflow-hidden animate-scaleIn">
+                <div className="p-4 border-b border-slate-800/60 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                  <button className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Mark all read</button>
                 </div>
-                <div className="max-h-96 overflow-y-auto">
+                <div className="max-h-80 overflow-y-auto">
                   {notifications.map(alert => (
                     <div
                       key={alert.id}
-                      className={cn(
-                        'p-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors',
-                        !alert.acknowledged && 'bg-blue-50/50 dark:bg-blue-900/10'
-                      )}
                       onClick={() => acknowledgeAlert(alert.id)}
+                      className={cn(
+                        'p-3.5 border-b border-slate-800/40 hover:bg-slate-800/30 cursor-pointer transition-colors',
+                        !alert.acknowledged && 'bg-blue-500/5'
+                      )}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex gap-3">
                         <div className={cn(
-                          'w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0',
-                          alert.severity === 'critical' && 'bg-red-500',
-                          alert.severity === 'warning' && 'bg-amber-500',
-                          alert.severity === 'info' && 'bg-blue-500'
+                          'w-2 h-2 rounded-full mt-2 flex-shrink-0',
+                          alert.severity === 'critical' ? 'bg-red-500' :
+                            alert.severity === 'warning' ? 'bg-amber-500' : 'bg-blue-500'
                         )} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                            {alert.title}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {alert.message}
-                          </p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                            {Math.floor((Date.now() - alert.timestamp.getTime()) / 60000)} min ago
-                          </p>
+                          <p className="text-[13px] font-medium text-slate-200">{alert.title}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{alert.message}</p>
+                          <p className="text-[11px] text-slate-700 mt-1">{Math.floor((Date.now() - alert.timestamp.getTime()) / 60000)}m ago</p>
                         </div>
                         {!alert.acknowledged && (
-                          <span className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded-full">
-                            New
-                          </span>
+                          <span className="text-[10px] font-medium text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full h-fit">New</span>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                  <button className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium text-center">
+                <div className="p-3 border-t border-slate-800/60">
+                  <button className="w-full text-xs text-blue-400 hover:text-blue-300 transition-colors text-center py-1">
                     View all notifications
                   </button>
                 </div>
@@ -799,12 +895,15 @@ function Header({
           )}
         </div>
 
-        {/* User Menu */}
+        {/* User */}
         <button
           onClick={onProfileClick}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-xl hover:bg-slate-800/60 transition-colors group"
         >
-          <User className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center">
+            <User className="w-3.5 h-3.5 text-blue-400" />
+          </div>
+          <span className="text-[13px] font-medium text-slate-400 group-hover:text-slate-200 transition-colors hidden lg:inline">Admin</span>
         </button>
       </div>
     </header>
@@ -815,66 +914,45 @@ function Header({
 // Main Dashboard Layout
 // ============================================================================
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { filterNavItems } = usePermissions();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [quickSettingsOpen, setQuickSettingsOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<Alert[]>([
-    { id: '1', severity: 'critical', title: 'Router Offline', message: 'RTR-HQ-01 is offline', timestamp: new Date(Date.now() - 2 * 60000), acknowledged: false, routerId: 'r1' },
-    { id: '2', severity: 'warning', title: 'High CPU Usage', message: 'RTR-BRANCH-15 at 92%', timestamp: new Date(Date.now() - 15 * 60000), acknowledged: false, routerId: 'r2' },
-    { id: '3', severity: 'info', title: 'Backup Complete', message: 'Daily backup completed', timestamp: new Date(Date.now() - 60 * 60000), acknowledged: true },
+    { id: '1', severity: 'critical', title: 'Router Offline', message: 'RTR-HQ-01 is not responding', timestamp: new Date(Date.now() - 2 * 60000), acknowledged: false },
+    { id: '2', severity: 'warning', title: 'High CPU Usage', message: 'RTR-BRANCH-15 at 92% CPU', timestamp: new Date(Date.now() - 15 * 60000), acknowledged: false },
+    { id: '3', severity: 'info', title: 'Backup Complete', message: 'Daily config backup completed', timestamp: new Date(Date.now() - 60 * 60000), acknowledged: true },
   ]);
 
-  const filteredNav = useMemo(() =>
-    filterNavItems(navigationItems),
-    [filterNavItems]);
-
-  const acknowledgeAlert = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, acknowledged: true } : n)
-    );
-  };
+  const acknowledgeAlert = (id: string) =>
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, acknowledged: true } : n));
 
   const handleNavigate = useCallback((href: string) => {
     router.push(href);
+    setMobileOpen(false);
   }, [router]);
 
-  // Handle mobile sidebar
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setMobileOpen(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const onResize = () => { if (window.innerWidth >= 1024) setMobileOpen(false); };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Close notifications on navigation
-  useEffect(() => {
-    setShowNotifications(false);
-  }, [pathname]);
+  useEffect(() => { setShowNotifications(false); }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-[#0a0e14]">
       <QuickSearch />
-      
+
       <Sidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileOpen}
         onToggleMobile={() => setMobileOpen(!mobileOpen)}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        filteredNav={filteredNav}
         activeHref={pathname}
         onNavigate={handleNavigate}
       />
@@ -886,21 +964,16 @@ export default function DashboardLayout({
         setShowNotifications={setShowNotifications}
         acknowledgeAlert={acknowledgeAlert}
         onProfileClick={() => handleNavigate('/profile')}
-        onQuickSettingsClick={() => setQuickSettingsOpen(!quickSettingsOpen)}
-      />
-
-      <QuickSettingsPanel
-        isOpen={quickSettingsOpen}
-        onToggle={() => setQuickSettingsOpen(!quickSettingsOpen)}
+        collapsed={sidebarCollapsed}
       />
 
       <main
         className={cn(
-          'pt-20 min-h-screen transition-all duration-300 ease-in-out',
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
+          'pt-16 min-h-screen transition-all duration-300 ease-in-out',
+          sidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-[260px]',
         )}
       >
-        <div className="p-4 md:p-6 lg:p-8">
+        <div className="p-4 md:p-6">
           {children}
         </div>
       </main>
