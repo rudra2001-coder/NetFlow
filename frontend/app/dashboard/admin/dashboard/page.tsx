@@ -6,7 +6,7 @@ import {
   Activity, Server, Users, TrendingUp, TrendingDown,
   Wifi, Bell, AlertTriangle, Zap, ArrowUpRight,
   ArrowDownRight, RefreshCw, Layers, CheckCircle2, Clock,
-  Gauge, Shield
+  Gauge, Shield, CreditCard, FileText, WifiOff, Ticket
 } from 'lucide-react';
 import { Card, CardBody, CardHeader, Button, Badge } from '@/components';
 import {
@@ -80,7 +80,77 @@ export default function DashboardIndex() {
         </div>
       </div>
 
+      {/* Quick Actions Bar - Operator Workflow First */}
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Quick Actions</h3>
+          <span className="text-xs text-neutral-500">Most used operator workflows</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" className="border-green-500/50 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20" onClick={() => router.push('/accounting/payments/new')}>
+            <CreditCard className="w-4 h-4 mr-1.5" />
+            Record Payment
+          </Button>
+          <Button size="sm" variant="outline" className="border-blue-500/50 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => router.push('/ppp')}>
+            <Users className="w-4 h-4 mr-1.5" />
+            View Customers
+          </Button>
+          <Button size="sm" variant="outline" className="border-orange-500/50 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20" onClick={() => router.push('/billing')}>
+            <FileText className="w-4 h-4 mr-1.5" />
+            Generate Bill
+          </Button>
+          <Button size="sm" variant="outline" className="border-red-500/50 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => router.push('/routers')}>
+            <WifiOff className="w-4 h-4 mr-1.5" />
+            Manage Network
+          </Button>
+          <Button size="sm" variant="outline" className="border-purple-500/50 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20" onClick={() => router.push('/support/tickets')}>
+            <Ticket className="w-4 h-4 mr-1.5" />
+            New Ticket
+          </Button>
+        </div>
+      </div>
+
       {/* Quick Stats - Enhanced Design */}
+      {/* Row 1: Customer Stats - Per UI Blueprint */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+        {/* Customer-Focused Stats - Per UI Blueprint */}
+        {[
+          { label: 'Total Customers', value: '2,456', trend: '+124', up: true, icon: <Users className="w-4 h-4" />, color: 'blue', bgGradient: 'from-blue-500 to-blue-600' },
+          { label: 'Active', value: '2,189', trend: '+89', up: true, icon: <CheckCircle2 className="w-4 h-4" />, color: 'green', bgGradient: 'from-green-500 to-emerald-600' },
+          { label: 'Suspended', value: '156', trend: '-12', up: false, icon: <AlertTriangle className="w-4 h-4" />, color: 'red', bgGradient: 'from-red-500 to-orange-600' },
+          { label: 'Online Now', value: '1,247', trend: '+156', up: true, icon: <Wifi className="w-4 h-4" />, color: 'cyan', bgGradient: 'from-cyan-500 to-blue-600' },
+          { label: 'Total Due', value: '$12.4K', trend: '+8%', up: true, icon: <CreditCard className="w-4 h-4" />, color: 'orange', bgGradient: 'from-orange-500 to-amber-600' },
+          { label: 'Today Collection', value: '$2,840', trend: '+15%', up: true, icon: <TrendingUp className="w-4 h-4" />, color: 'emerald', bgGradient: 'from-emerald-500 to-green-600' },
+        ].map((stat, i) => (
+          <Card 
+            key={`customer-${i}`} 
+            className={`overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-xl bg-gradient-to-br dark:from-neutral-900 dark:to-neutral-950`}
+          >
+            <CardBody className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.bgGradient} text-white shadow-md`}>
+                  {stat.icon}
+                </div>
+                <div className={`flex items-center text-xs font-semibold px-1.5 py-0.5 rounded ${
+                  stat.up === null
+                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                    : stat.up 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                }`}>
+                  {stat.up === null ? stat.trend : stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">{stat.label}</p>
+                <p className="text-xl font-bold text-neutral-900 dark:text-white mt-0.5">{stat.value}</p>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      {/* Network Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Network Load', value: '42.8%', trend: '+2.4%', up: true, icon: <Gauge className="w-5 h-5" />, color: 'blue', delay: 'stagger-1', bgGradient: 'from-blue-500 to-blue-600' },

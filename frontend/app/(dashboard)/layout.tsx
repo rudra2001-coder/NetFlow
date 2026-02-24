@@ -83,24 +83,8 @@ const navigationItems: NavItem[] = [
     icon: <Network className="w-[18px] h-[18px]" />,
     description: 'Infrastructure & Topology',
     children: [
-      {
-        id: 'routers',
-        label: 'Routers',
-        icon: <Router className="w-4 h-4" />,
-        href: '/routers',
-        badge: 24,
-        badgeColor: 'bg-blue-500',
-        description: 'MikroTik device management',
-      },
-      {
-        id: 'olts',
-        label: 'OLT Management',
-        icon: <Antenna className="w-4 h-4" />,
-        href: '/olts',
-        badge: 8,
-        badgeColor: 'bg-cyan-500',
-        description: 'Optical line terminals',
-      },
+
+
       {
         id: 'interfaces',
         label: 'Interfaces',
@@ -131,6 +115,49 @@ const navigationItems: NavItem[] = [
     label: 'MikroTik',
     icon: <Cpu className="w-[18px] h-[18px]" />,
     description: 'RouterOS management',
+    children: [
+      {
+        id: 'routers',
+        label: 'Routers',
+        icon: <Router className="w-4 h-4" />,
+        href: '/routers',
+        badge: 24,
+        badgeColor: 'bg-blue-500',
+        description: 'MikroTik device management',
+      },
+
+      {
+        id: 'bulk-import',
+        label: 'Bulk Import',
+        icon: <Upload className="w-4 h-4" />,
+        href: '/ppp',
+        description: 'CSV / API bulk import',
+      },
+      {
+        id: 'terminal',
+        label: 'Terminal',
+        icon: <Terminal className="w-4 h-4" />,
+        href: '/dashboard/command-center',
+        description: 'SSH command center',
+      },
+    ],
+  },
+  // ── OLT Management ────────────────────────────────────────────────────────────
+  {
+    id: 'olt-management',
+    label: 'OLT Management',
+    icon: <Antenna className="w-[18px] h-[18px]" />,
+    description: 'OLT device management',
+    href: '/olts',
+    badge: 8,
+    badgeColor: 'bg-cyan-500',
+  },
+  // ── CUSTOMERS ────────────────────────────────────────────────────────────
+  {
+    id: 'customers',
+    label: 'Customers',
+    icon: <Users2 className="w-[18px] h-[18px]" />,
+    description: 'Subscriber management',
     children: [
       {
         id: 'ppp-users',
@@ -164,53 +191,7 @@ const navigationItems: NavItem[] = [
         badgeColor: 'bg-orange-500',
         description: 'Problem device audit',
       },
-      {
-        id: 'bulk-import',
-        label: 'Bulk Import',
-        icon: <Upload className="w-4 h-4" />,
-        href: '/ppp',
-        description: 'CSV / API bulk import',
-      },
-      {
-        id: 'terminal',
-        label: 'Terminal',
-        icon: <Terminal className="w-4 h-4" />,
-        href: '/dashboard/command-center',
-        description: 'SSH command center',
-      },
-    ],
-  },
 
-  // ── CUSTOMERS ────────────────────────────────────────────────────────────
-  {
-    id: 'customers',
-    label: 'Customers',
-    icon: <Users2 className="w-[18px] h-[18px]" />,
-    description: 'Subscriber management',
-    children: [
-      {
-        id: 'resellers',
-        label: 'Resellers',
-        icon: <Building2 className="w-4 h-4" />,
-        href: '/resellers',
-        badge: 28,
-        badgeColor: 'bg-emerald-500',
-        description: 'Partner network',
-      },
-      {
-        id: 'packages',
-        label: 'Packages',
-        icon: <Package className="w-4 h-4" />,
-        href: '/resellers/packages',
-        description: 'Service plans',
-      },
-      {
-        id: 'tariffs',
-        label: 'Tariffs',
-        icon: <Tag className="w-4 h-4" />,
-        href: '/resellers/tariffs',
-        description: 'Pricing structures',
-      },
     ],
   },
 
@@ -245,6 +226,32 @@ const navigationItems: NavItem[] = [
           { id: 'acc-reconciliation', label: 'Reconciliation', icon: <ArrowLeftRight className="w-3.5 h-3.5" />, href: '/accounting/reconciliation', description: 'Bank matching' },
         ],
       },
+
+    ],
+  },
+  // ── MacReseller ────────────────────────────────────────────────────
+
+  {
+    id: 'macreseller',
+    label: 'MACReseller',
+    icon: <Globe className="w-[18px] h-[18px]" />,
+    description: 'Global reseller network',
+    children: [
+
+      {
+        id: 'packages',
+        label: 'Packages',
+        icon: <Package className="w-4 h-4" />,
+        href: '/resellers/packages',
+        description: 'Service plans',
+      },
+      {
+        id: 'tariffs',
+        label: 'Tariffs',
+        icon: <Tag className="w-4 h-4" />,
+        href: '/resellers/tariffs',
+        description: 'Pricing structures',
+      },
       {
         id: 'reseller-funds',
         label: 'Reseller Funds',
@@ -253,15 +260,23 @@ const navigationItems: NavItem[] = [
         description: 'Partner balances',
       },
       {
+        id: 'resellers',
+        label: 'Resellers',
+        icon: <Building2 className="w-4 h-4" />,
+        href: '/resellers',
+        badge: 28,
+        badgeColor: 'bg-emerald-500',
+        description: 'Partner network',
+      },
+      {
         id: 'settlements',
         label: 'Settlements',
         icon: <Scale className="w-4 h-4" />,
         href: '/resellers/settlements',
         description: 'Partner settlements',
       },
-    ],
+    ]
   },
-
   // ── ANALYTICS & REPORTS ──────────────────────────────────────────────────
   {
     id: 'analytics-group',

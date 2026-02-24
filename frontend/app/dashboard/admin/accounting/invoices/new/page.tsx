@@ -22,9 +22,11 @@ export default function NewInvoicePage() {
     try {
       // Post to backend; if not present this will fail silently for now
       const token = getStoredToken();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch('/api/accounting/invoices', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'Authorization': `Bearer ${token}` } : {}),
+        headers,
         body: JSON.stringify(form),
       });
 

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef } from 'react';
 import ReactFlow, {
     addEdge,
     Background,
@@ -15,15 +15,15 @@ import ReactFlow, {
     MarkerType,
     Handle,
     Position,
-} from "reactflow";
-import "reactflow/dist/style.css";
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import {
     Server, Layers, Wifi, HardDrive, Globe,
     Trash2, Plus, Zap, Activity, Info,
     Maximize2, MousePointer2, Share2, Shield
-} from "lucide-react";
-import { Button, Card, CardBody, Badge, Input } from "@/components";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { Button, Card, CardBody, Badge, Input } from '@/components';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Custom Node Components (Glassmorphism)
@@ -130,7 +130,7 @@ export default function TopologyPage() {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
     const onConnect = useCallback(
-        (params: Connection) => setEdges((eds) => addEdge({
+        (params: Connection) => setEdges((eds: Edge[]) => addEdge({
             ...params,
             animated: true,
             style: { stroke: "#3b82f6", strokeWidth: 2 },
@@ -183,14 +183,14 @@ export default function TopologyPage() {
                 },
             };
 
-            setNodes((nds) => nds.concat(newNode));
+            setNodes((nds: Node[]) => nds.concat(newNode));
         },
         [setNodes]
     );
 
     const deleteSelected = () => {
-        setNodes((nds) => nds.filter((node) => !node.selected));
-        setEdges((eds) => eds.filter((edge) => !edge.selected));
+        setNodes((nds: Node[]) => nds.filter((node: Node) => !node.selected));
+        setEdges((eds: Edge[]) => eds.filter((edge: Edge) => !edge.selected));
     };
 
     return (
@@ -280,7 +280,7 @@ export default function TopologyPage() {
                                 <Controls className="!bg-white dark:!bg-neutral-900 !border-0 !shadow-xl !rounded-xl overflow-hidden" />
                                 <MiniMap
                                     className="!bg-white/80 dark:!bg-neutral-900/80 !backdrop-blur-md !rounded-2xl !border-0 !shadow-2xl"
-                                    nodeColor={(n) => (n.data as any).color === 'bg-blue-600' ? '#3b82f6' : '#9ca3af'}
+                                    nodeColor={(n: Node) => (n.data as any).color === 'bg-blue-600' ? '#3b82f6' : '#9ca3af'}
                                     maskColor="rgba(0, 0, 0, 0.1)"
                                 />
 

@@ -2,7 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
   },
   async rewrites() {
     return [
@@ -11,6 +16,11 @@ const nextConfig = {
         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/:path*`,
       },
     ];
+  },
+  // Performance optimizations
+  experimental: {
+    // Optimize package loading for better tree-shaking
+    optimizePackageImports: ['lucide-react', 'recharts', 'reactflow'],
   },
 };
 
