@@ -23,6 +23,8 @@ import {
   Lock, UserCheck, LinkIcon, PhoneCall,
   Sun, Moon, ChevronUp, Boxes, Signal,
   Landmark, Scale, FileSearch, AlertCircle, OctagonAlert,
+  Eye, EyeOff, Monitor, Globe2, Timer, GaugeCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -128,10 +130,17 @@ const navigationItems: NavItem[] = [
 
       {
         id: 'bulk-import',
-        label: 'Bulk Import',
+        label: 'Bulk Client Import',
         icon: <Upload className="w-4 h-4" />,
-        href: '/ppp',
-        description: 'CSV / API bulk import',
+        href: '/bulk-import',
+        description: 'Import clients from Excel/CSV',
+      },
+      {
+        id: 'bulk-line-import',
+        label: 'Bulk Line Import',
+        icon: <FileSpreadsheet className="w-4 h-4" />,
+        href: '/bulk-line-import',
+        description: 'Import lines from MikroTik',
       },
       {
         id: 'terminal',
@@ -585,7 +594,7 @@ function Sidebar({
   // Group the navigation items for section labels
   const sections: { label: string; items: NavItem[] }[] = [
     { label: '', items: navigationItems.filter(i => i.id === 'dashboard') },
-    { label: 'Infrastructure', items: navigationItems.filter(i => ['network', 'mikrotek'].includes(i.id)) },
+    { label: 'Infrastructure', items: navigationItems.filter(i => ['network', 'mikrotek', 'olt-management'].includes(i.id)) },
     { label: 'Business', items: navigationItems.filter(i => ['customers', 'billing-finance'].includes(i.id)) },
     { label: 'Operations', items: navigationItems.filter(i => ['analytics-group', 'automation'].includes(i.id)) },
     { label: 'Organization', items: navigationItems.filter(i => ['hr', 'support-group'].includes(i.id)) },
@@ -789,6 +798,8 @@ function Header({
   acknowledgeAlert,
   onProfileClick,
   collapsed,
+  onQuickSettingsClick,
+  showQuickSettings,
 }: {
   onMenuClick: () => void;
   notifications: Alert[];
@@ -797,6 +808,8 @@ function Header({
   acknowledgeAlert: (id: string) => void;
   onProfileClick: () => void;
   collapsed: boolean;
+  onQuickSettingsClick: () => void;
+  showQuickSettings: boolean;
 }) {
   const pathname = usePathname();
   const criticalCount = notifications.filter(n => n.severity === 'critical' && !n.acknowledged).length;
@@ -847,6 +860,20 @@ function Header({
         <button className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors">
           <RefreshCw className="w-3.5 h-3.5" />
           <span className="hidden lg:inline">Sync</span>
+        </button>
+
+        {/* Quick Settings */}
+        <button
+          onClick={onQuickSettingsClick}
+          className={cn(
+            'relative p-2 rounded-lg transition-colors',
+            showQuickSettings 
+              ? 'text-purple-400 bg-purple-500/10' 
+              : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60'
+          )}
+          title="Quick Settings"
+        >
+          <SlidersHorizontal className="w-4.5 h-4.5" />
         </button>
 
         {/* Notifications */}
@@ -926,6 +953,270 @@ function Header({
 }
 
 // ============================================================================
+// Quick Settings Panel
+// ============================================================================
+
+interface QuickSettingsPanelProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function QuickSettingsPanel({ open, onClose }: QuickSettingsPanelProps) {
+  const [settings, setSettings] = useState({
+    darkMode: false,
+    compactMode: false,
+    showNotifications: true,
+    autoRefresh: true,
+    refreshInterval: 30,
+    language: 'en',
+    timezone: 'UTC+6',
+    performanceMode: false,
+  });
+
+  const toggleSetting = (key: keyof typeof settings) => {
+    if (typeof settings[key] === 'boolean') {
+      setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      
+      {/* Panel */}
+      <div className="
+        fixed top-0 right-0 z-50 h-screen w-80
+        bg-[#0d1117] border-l border-slate-800/60
+        transform transition-transform duration-300 ease-out
+        shadow-2xl shadow-black/20
+        overflow-hidden
+      ">
+        {/* Header */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/60 flex-shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-400 rounded-lg flex items-center justify-center">
+              <SlidersHorizontal className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-sm font-semibold text-white">Quick Settings</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto h-[calc(100vh-4rem)] p-4 space-y-4">
+          {/* Appearance Section */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Appearance</p>
+            
+            <div 
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800/60"
+              onClick={() => toggleSetting('darkMode')}
+            >
+              <div className="flex items-center gap-3">
+                {settings.darkMode ? <Moon className="w-4 h-4 text-purple-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+                <span className="text-[13px] text-slate-300">Dark Mode</span>
+              </div>
+              <div className={cn(
+                'w-10 h-5.5 rounded-full transition-colors relative cursor-pointer',
+                settings.darkMode ? 'bg-purple-500' : 'bg-slate-700'
+              )}>
+                <div className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.darkMode ? 'translate-x-5' : 'translate-x-1'
+                )} />
+              </div>
+            </div>
+
+            <div 
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 cursor-pointer"
+              onClick={() => toggleSetting('compactMode')}
+            >
+              <div className="flex items-center gap-3">
+                <GaugeCircle className="w-4 h-4 text-cyan-400" />
+                <span className="text-[13px] text-slate-300">Compact Mode</span>
+              </div>
+              <div className={cn(
+                'w-10 h-5.5 rounded-full transition-colors relative',
+                settings.compactMode ? 'bg-cyan-500' : 'bg-slate-700'
+              )}>
+                <div className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.compactMode ? 'translate-x-5' : 'translate-x-1'
+                )} />
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications Section */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Notifications</p>
+            
+            <div 
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 cursor-pointer"
+              onClick={() => toggleSetting('showNotifications')}
+            >
+              <div className="flex items-center gap-3">
+                {settings.showNotifications ? <Bell className="w-4 h-4 text-blue-400" /> : <BellOff className="w-4 h-4 text-slate-500" />}
+                <span className="text-[13px] text-slate-300">Show Alerts</span>
+              </div>
+              <div className={cn(
+                'w-10 h-5.5 rounded-full transition-colors relative',
+                settings.showNotifications ? 'bg-blue-500' : 'bg-slate-700'
+              )}>
+                <div className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.showNotifications ? 'translate-x-5' : 'translate-x-1'
+                )} />
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Section */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Performance</p>
+            
+            <div 
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 cursor-pointer"
+              onClick={() => toggleSetting('performanceMode')}
+            >
+              <div className="flex items-center gap-3">
+                <Zap className={cn('w-4 h-4', settings.performanceMode ? 'text-amber-400' : 'text-slate-500')} />
+                <span className="text-[13px] text-slate-300">Performance Mode</span>
+              </div>
+              <div className={cn(
+                'w-10 h-5.5 rounded-full transition-colors relative',
+                settings.performanceMode ? 'bg-amber-500' : 'bg-slate-700'
+              )}>
+                <div className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.performanceMode ? 'translate-x-5' : 'translate-x-1'
+                )} />
+              </div>
+            </div>
+
+            <div 
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 cursor-pointer"
+              onClick={() => toggleSetting('autoRefresh')}
+            >
+              <div className="flex items-center gap-3">
+                <RefreshCw className={cn('w-4 h-4', settings.autoRefresh ? 'text-green-400' : 'text-slate-500')} />
+                <span className="text-[13px] text-slate-300">Auto Refresh</span>
+              </div>
+              <div className={cn(
+                'w-10 h-5.5 rounded-full transition-colors relative',
+                settings.autoRefresh ? 'bg-green-500' : 'bg-slate-700'
+              )}>
+                <div className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  settings.autoRefresh ? 'translate-x-5' : 'translate-x-1'
+                )} />
+              </div>
+            </div>
+
+            {settings.autoRefresh && (
+              <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800/60">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Timer className="w-4 h-4 text-slate-500" />
+                    <span className="text-[13px] text-slate-300">Refresh Interval</span>
+                  </div>
+                  <span className="text-[12px] text-blue-400 font-medium">{settings.refreshInterval}s</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="10" 
+                  max="120" 
+                  step="10"
+                  value={settings.refreshInterval}
+                  onChange={(e) => setSettings(prev => ({ ...prev, refreshInterval: parseInt(e.target.value) }))}
+                  className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+                <div className="flex justify-between text-[10px] text-slate-600 mt-1">
+                  <span>10s</span>
+                  <span>120s</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Regional Section */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Regional</p>
+            
+            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800/60">
+              <div className="flex items-center gap-3 mb-2">
+                <Globe2 className="w-4 h-4 text-emerald-400" />
+                <span className="text-[13px] text-slate-300">Language</span>
+              </div>
+              <select 
+                value={settings.language}
+                onChange={(e) => setSettings(prev => ({ ...prev, language: e.target.value }))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+              >
+                <option value="en">English</option>
+                <option value="bn">বাংলা</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+              </select>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800/60">
+              <div className="flex items-center gap-3 mb-2">
+                <Monitor className="w-4 h-4 text-indigo-400" />
+                <span className="text-[13px] text-slate-300">Timezone</span>
+              </div>
+              <select 
+                value={settings.timezone}
+                onChange={(e) => setSettings(prev => ({ ...prev, timezone: e.target.value }))}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+              >
+                <option value="UTC+6">UTC+6 (Bangladesh)</option>
+                <option value="UTC">UTC</option>
+                <option value="UTC+1">UTC+1</option>
+                <option value="UTC+5">UTC+5</option>
+                <option value="UTC+8">UTC+8</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Quick Actions</p>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                <RefreshCw className="w-4 h-4" />
+                <span className="text-[12px]">Sync</span>
+              </button>
+              <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                <Gauge className="w-4 h-4" />
+                <span className="text-[12px]">Metrics</span>
+              </button>
+              <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                <Activity className="w-4 h-4" />
+                <span className="text-[12px]">Status</span>
+              </button>
+              <button className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/40 border border-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                <Settings className="w-4 h-4" />
+                <span className="text-[12px]">Config</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ============================================================================
 // Main Dashboard Layout
 // ============================================================================
 
@@ -936,6 +1227,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showQuickSettings, setShowQuickSettings] = useState(false);
 
   const [notifications, setNotifications] = useState<Alert[]>([
     { id: '1', severity: 'critical', title: 'Router Offline', message: 'RTR-HQ-01 is not responding', timestamp: new Date(Date.now() - 2 * 60000), acknowledged: false },
@@ -980,12 +1272,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         acknowledgeAlert={acknowledgeAlert}
         onProfileClick={() => handleNavigate('/profile')}
         collapsed={sidebarCollapsed}
+        onQuickSettingsClick={() => setShowQuickSettings(!showQuickSettings)}
+        showQuickSettings={showQuickSettings}
+      />
+
+      <QuickSettingsPanel
+        open={showQuickSettings}
+        onClose={() => setShowQuickSettings(false)}
       />
 
       <main
         className={cn(
           'pt-16 min-h-screen transition-all duration-300 ease-in-out',
           sidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-[260px]',
+          showQuickSettings && 'lg:pr-[320px]'
         )}
       >
         <div className="p-4 md:p-6">
