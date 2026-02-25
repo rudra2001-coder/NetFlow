@@ -24,7 +24,8 @@ import {
   Sun, Moon, ChevronUp, Boxes, Signal,
   Landmark, Scale, FileSearch, AlertCircle, OctagonAlert,
   Eye, EyeOff, Monitor, Globe2, Timer, GaugeCircle,
-  FileSpreadsheet,
+  FileSpreadsheet, UserPlus, UserMinus, CalendarClock, ArrowRightLeft,
+  Send, Archive, ClipboardList,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -201,6 +202,67 @@ const navigationItems: NavItem[] = [
         description: 'Problem device audit',
       },
 
+    ],
+  },
+
+  // ── CLIENT MANAGEMENT ──────────────────────────────────────────────────────
+  {
+    id: 'client',
+    label: 'Client',
+    icon: <UserPlus className="w-[18px] h-[18px]" />,
+    description: 'Client Management',
+    children: [
+      {
+        id: 'new-request',
+        label: 'New Request',
+        icon: <Send className="w-4 h-4" />,
+        href: '/client/new-request',
+        description: 'New connection requests',
+      },
+      {
+        id: 'add-new',
+        label: 'Add New',
+        icon: <UserPlus className="w-4 h-4" />,
+        href: '/client/add-new',
+        description: 'Add new client',
+      },
+      {
+        id: 'client-list',
+        label: 'Client List',
+        icon: <Users className="w-4 h-4" />,
+        href: '/client',
+        badge: 523,
+        badgeColor: 'bg-emerald-500',
+        description: 'All active clients',
+      },
+      {
+        id: 'left-client',
+        label: 'Left Client',
+        icon: <UserMinus className="w-4 h-4" />,
+        href: '/client/left',
+        description: 'Disconnected clients',
+      },
+      {
+        id: 'scheduler',
+        label: 'Scheduler',
+        icon: <CalendarClock className="w-4 h-4" />,
+        href: '/client/scheduler',
+        description: 'Auto tasks & scheduling',
+      },
+      {
+        id: 'change-request',
+        label: 'Change Request',
+        icon: <ArrowRightLeft className="w-4 h-4" />,
+        href: '/client/change-request',
+        description: 'Plan & package changes',
+      },
+      {
+        id: 'portal-manage',
+        label: 'Portal Manage',
+        icon: <Settings className="w-4 h-4" />,
+        href: '/client/portal',
+        description: 'Client portal settings',
+      },
     ],
   },
 
