@@ -35,6 +35,14 @@ import {
   Receipt,
   ClipboardList,
   PieChart,
+  MapPin,
+  Package,
+  Box as BoxIcon,
+  UserCircle,
+  BookOpen,
+  PenTool,
+  Landmark,
+  Archive,
 } from "lucide-react";
 import { Avatar } from "../ui/Avatar";
 import { useUIStore, hasPermission as checkPermission, isRouteAllowed as checkRouteAllowed, defaultRolePermissions, UserSession, UserRole, PermissionAction } from "../../lib/store/uiStore";
@@ -222,10 +230,34 @@ const navigationSections: NavSection[] = [
     category: "accounting",
     items: [
       {
-        label: "Accounting Dashboard",
+        label: "All",
         href: "/accounting",
-        icon: <PieChart size={20} />,
+        icon: <Grid2X2 size={20} />,
         requiredPermission: { action: "view", resource: "accounting" },
+        children: [
+          { label: "Dashboard", href: "/accounting", icon: <PieChart size={18} /> },
+          { label: "Invoices", href: "/accounting/invoices", icon: <Receipt size={18} /> },
+          { label: "Payments", href: "/accounting/payments", icon: <CreditCard size={18} /> },
+          { label: "Expenses", href: "/accounting/expenses", icon: <Wallet size={18} /> },
+          { label: "Income", href: "/accounting/income", icon: <DollarSign size={18} /> },
+          { label: "Ledger", href: "/accounting/ledger", icon: <ScrollText size={18} /> },
+          { label: "Cash Book", href: "/accounting/cash-book", icon: <BookOpen size={18} /> },
+          { label: "Journal", href: "/accounting/journal", icon: <PenTool size={18} /> },
+          { label: "Reconciliation", href: "/accounting/reconciliation", icon: <ClipboardList size={18} /> },
+          { label: "Reports", href: "/accounting/reports", icon: <FileText size={18} /> },
+        ],
+      },
+      {
+        label: "Cash Book",
+        href: "/accounting/cash-book",
+        icon: <BookOpen size={20} />,
+        requiredPermission: { action: "view", resource: "accounting.cashbook" },
+      },
+      {
+        label: "Journal",
+        href: "/accounting/journal",
+        icon: <PenTool size={20} />,
+        requiredPermission: { action: "view", resource: "accounting.journal" },
       },
       {
         label: "Invoices",
@@ -292,6 +324,32 @@ const navigationSections: NavSection[] = [
         href: "/templates",
         icon: <Grid2X2 size={20} />,
         requiredPermission: { action: "view", resource: "templates" },
+      },
+    ],
+  },
+  {
+    title: "Configuration",
+    category: "config",
+    items: [
+      {
+        label: "Zones",
+        href: "/configuration/zones",
+        icon: <MapPin size={20} />,
+      },
+      {
+        label: "Packages",
+        href: "/configuration/packages",
+        icon: <Package size={20} />,
+      },
+      {
+        label: "Equipment",
+        href: "/configuration/boxes",
+        icon: <BoxIcon size={20} />,
+      },
+      {
+        label: "Client Types",
+        href: "/configuration/client-types",
+        icon: <UserCircle size={20} />,
       },
     ],
   },

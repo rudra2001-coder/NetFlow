@@ -2,38 +2,55 @@
 
 import React, { useState } from "react";
 import {
-    FileText, UserPlus, Search, Filter,
-    MoreHorizontal, Mail, Phone, MapPin,
-    AlertCircle, CheckCircle2, X, ChevronRight,
-    UserCircle2, ShieldAlert, Clock, Flag,
-    MessageCircle, Hash, ArrowUpRight, Check
+    FileText, UserPlus, Search, Filter, ChevronRight,
+    AlertCircle, CheckCircle2, X, Clock, Flag,
+    MessageCircle, Hash, ArrowUpRight, Check, UserCheck,
+    Eye, MoreHorizontal, RefreshCw, UserCircle2, ShieldAlert
 } from "lucide-react";
 import {
     Card, CardHeader, CardBody,
     Button, Badge, Input, Avatar,
-    Select, Modal, Toggle, Alert, Progress
+    Modal, Toggle, Progress, Select
 } from "@/components";
 import { cn } from "@/lib/utils";
 
 export default function TicketManagement() {
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+    const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
+    const [activeTab, setActiveTab] = useState(0);
+    const [searchQuery, setSearchQuery] = useState("");
 
-    const tickets = [
-        { id: "TKT-4091", title: "PPPoE Server Timeout - Node HQ", requester: "Admin Alpha", status: "Open", priority: "Critical", assigned: "Unassigned", age: "14m" },
-        { id: "TKT-4088", title: "Latent Response from MikroTik-02", requester: "Sarah Jones", status: "Assigned", priority: "High", assigned: "John Wick", age: "42m" },
-        { id: "TKT-4085", title: "Billing Discrepancy - Cycle 002", requester: "Rudra", status: "Pending", priority: "Medium", assigned: "Sarah Connor", age: "2h 15m" },
-        { id: "TKT-4082", title: "RADIUS Secret Mismatch", requester: "Field-Ops", status: "Assigned", priority: "High", assigned: "Elliot Alderson", age: "3h 40m" },
-        { id: "TKT-4079", title: "Hotspot Logo Replacement", requester: "Mark Marketing", status: "Closed", priority: "Low", assigned: "Ada Lovelace", age: "5h 12m" },
-    ];
+    const [tickets, setTickets] = useState([
+        { id: "TKT-4091", title: "PPPoE Server Timeout - Node HQ", requester: "Admin Alpha", requesterPhone: "01712345678", status: "Open", priority: "Critical", assigned: "Unassigned", age: "14m", zone: "Zone A", category: "Network" },
+        { id: "TKT-4088", title: "Latent Response from MikroTik-02", requester: "Sarah Jones", requesterPhone: "01712345679", status: "Assigned", priority: "High", assigned: "John Wick", age: "42m", zone: "Zone B", category: "Technical" },
+        { id: "TKT-4085", title: "Billing Discrepancy - Cycle 002", requester: "Rudra", requesterPhone: "01712345680", status: "Pending", priority: "Medium", assigned: "Sarah Connor", age: "2h 15m", zone: "Zone A", category: "Billing" },
+        { id: "TKT-4082", title: "RADIUS Secret Mismatch", requester: "Field-Ops", requesterPhone: "01712345681", status: "Assigned", priority: "High", assigned: "Elliot Alderson", age: "3h 40m", zone: "Zone C", category: "Network" },
+        { id: "TKT-4079", title: "Hotspot Logo Replacement", requester: "Mark Marketing", requesterPhone: "01712345682", status: "Closed", priority: "Low", assigned: "Ada Lovelace", age: "5h 12m", zone: "Zone B", category: "General" },
+    ]);
 
     const employees = [
-        { id: "E1", name: "John Wick", role: "Security Architect", currentTasks: 4 },
-        { id: "E2", name: "Sarah Connor", role: "Network Tech", currentTasks: 2 },
-        { id: "E3", name: "Elliot Alderson", role: "Sys Admin", currentTasks: 1 },
-        { id: "E4", name: "Ada Lovelace", role: "Developer", currentTasks: 0 },
+        { id: "E1", name: "John Wick", role: "Security Architect", currentTasks: 4, avatar: "JW" },
+        { id: "E2", name: "Sarah Connor", role: "Network Tech", currentTasks: 2, avatar: "SC" },
+        { id: "E3", name: "Elliot Alderson", role: "Sys Admin", currentTasks: 1, avatar: "EA" },
+        { id: "E4", name: "Ada Lovelace", role: "Developer", currentTasks: 0, avatar: "AL" },
+        { id: "E5", name: "Bruce Wayne", role: "Field Tech", currentTasks: 3, avatar: "BW" },
     ];
+
+    const openAcceptModal = (ticket: any) => {
+        setSelectedTicket(ticket);
+        setIsAcceptModalOpen(true);
+    };
+
+    const handleAcceptTicket = () => {
+        setTickets(tickets.map(t => 
+            t.id === selectedTicket.id 
+                ? { ...t, status: 'Assigned', assigned: 'Current User' }
+                : t
+        ));
+        setIsAcceptModalOpen(false);
+    };
 
     const openAssignModal = (ticket: any) => {
         setSelectedTicket(ticket);
@@ -44,6 +61,19 @@ export default function TicketManagement() {
         setSelectedTicket(ticket);
         setIsResolveModalOpen(true);
     };
+
+    const tabs = ['All Tickets', 'Critical Duty', 'My Assignments', 'Awaiting Verification', 'Archive'];
+    const filteredTickets = tickets.filter(ticket => {
+        if (activeTab === 1) return ticket.priority === 'Critical';
+        if (activeTab === 2) return ticket.assigned !== 'Unassigned';
+        if (activeTab === 3) return ticket.status === 'Pending';
+        if (activeTab === 4) return ticket.status === 'Closed';
+        return true;
+    }).filter(ticket => 
+        ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.requester.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="space-y-8 animate-slideUp">
@@ -61,23 +91,26 @@ export default function TicketManagement() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-indigo-500 transition-colors" />
                         <input
                             type="text"
-                            placeholder="Find Ticket Identity..."
+                            placeholder="Search tickets..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="h-11 w-64 pl-10 pr-4 bg-white dark:bg-neutral-900 glass border-0 rounded-2xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 transition-all placeholder:uppercase placeholder:italic"
                         />
                     </div>
-                    <Button className="rounded-2xl h-11 px-8 font-black bg-indigo-600 shadow-xl shadow-indigo-500/20 uppercase text-xs tracking-widest" leftIcon={<Hash className="w-4 h-4" />}>Scan Protocol</Button>
+                    <Button className="rounded-2xl h-11 px-8 font-black bg-indigo-600 shadow-xl shadow-indigo-500/20 uppercase text-xs tracking-widest" leftIcon={<RefreshCw className="w-4 h-4" />} onClick={() => setSearchQuery('')}>Reset</Button>
                 </div>
             </div>
 
             {/* Filter Bar */}
             <div className="flex items-center justify-between p-2 bg-neutral-100 dark:bg-neutral-800/50 rounded-3xl glass shadow-inner border border-white/5">
                 <div className="flex items-center gap-1">
-                    {['All Tickets', 'Critical Duty', 'My Assignments', 'Awaiting Verification', 'Archive'].map((tab, idx) => (
+                    {tabs.map((tab, idx) => (
                         <button
                             key={idx}
+                            onClick={() => setActiveTab(idx)}
                             className={cn(
                                 "px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                idx === 0 ? "bg-white dark:bg-neutral-900 shadow-lg text-indigo-600" : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                                activeTab === idx ? "bg-white dark:bg-neutral-900 shadow-lg text-indigo-600" : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
                             )}
                         >
                             {tab}
@@ -85,7 +118,7 @@ export default function TicketManagement() {
                     ))}
                 </div>
                 <div className="flex items-center gap-2 px-2">
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-xl" leftIcon={<Filter className="w-4 h-4 text-neutral-400" />} />
+                    <span className="text-xs font-bold text-neutral-400 uppercase">{filteredTickets.length} tickets</span>
                 </div>
             </div>
 
@@ -147,7 +180,10 @@ export default function TicketManagement() {
                                                 {tkt.status !== 'Closed' && (
                                                     <>
                                                         {tkt.assigned === 'Unassigned' ? (
-                                                            <Button variant="ghost" size="sm" onClick={() => openAssignModal(tkt)} className="h-10 px-6 rounded-2xl glass hover:bg-white dark:hover:bg-neutral-800 text-indigo-500 font-black uppercase italic text-[9px] shadow-xl">Delegate</Button>
+                                                            <>
+                                                                <Button variant="ghost" size="sm" onClick={() => openAcceptModal(tkt)} className="h-10 px-4 rounded-2xl glass hover:bg-white dark:hover:bg-neutral-800 text-blue-500 font-black uppercase italic text-[9px] shadow-xl">Accept</Button>
+                                                                <Button variant="ghost" size="sm" onClick={() => openAssignModal(tkt)} className="h-10 px-4 rounded-2xl glass hover:bg-white dark:hover:bg-neutral-800 text-indigo-500 font-black uppercase italic text-[9px] shadow-xl">Delegate</Button>
+                                                            </>
                                                         ) : (
                                                             <Button variant="ghost" size="sm" onClick={() => openResolveModal(tkt)} className="h-10 px-6 rounded-2xl glass hover:bg-white dark:hover:bg-neutral-800 text-success-500 font-black uppercase italic text-[9px] shadow-xl">Resolve</Button>
                                                         )}
@@ -301,6 +337,63 @@ export default function TicketManagement() {
                             <Button variant="outline" className="h-16 px-10 rounded-[2rem] border-0 glass font-black uppercase tracking-widest text-xs text-neutral-500" onClick={() => setIsResolveModalOpen(false)}>Abort</Button>
                         </div>
                     </div>
+                </Card>
+            </Modal>
+
+            {/* Accept Ticket Modal */}
+            <Modal isOpen={isAcceptModalOpen} onClose={() => setIsAcceptModalOpen(false)} size="lg">
+                <Card className="border-0 shadow-2xl rounded-3xl">
+                    <div className="pb-0">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                                <UserCheck className="w-7 h-7 text-blue-500" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black dark:text-white uppercase italic">Accept Ticket</h3>
+                                <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Take ownership of this support request</p>
+                            </div>
+                        </div>
+                    </div>
+                    <CardBody>
+                        <div className="p-6 bg-neutral-50 dark:bg-neutral-800/50 rounded-2xl mt-4">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
+                                    <Hash className="w-5 h-5 text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="font-mono text-sm font-bold text-blue-500">{selectedTicket?.id}</p>
+                                    <p className="text-sm font-bold dark:text-white">{selectedTicket?.title}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-neutral-500">
+                                <span className="flex items-center gap-1"><UserCircle2 className="w-3 h-3" /> {selectedTicket?.requester}</span>
+                                <span className="flex items-center gap-1"><Flag className="w-3 h-3" /> {selectedTicket?.priority}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                            <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                                By accepting this ticket, you agree to take ownership and resolve it within the SLA timeframe.
+                            </p>
+                        </div>
+
+                        <div className="pt-6 flex items-center gap-4">
+                            <Button 
+                                className="h-14 flex-1 rounded-2xl bg-blue-600 shadow-xl shadow-blue-500/20 font-black uppercase tracking-widest text-xs"
+                                leftIcon={<Check className="w-4 h-4" />}
+                                onClick={handleAcceptTicket}
+                            >
+                                Accept & Take Ownership
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                className="h-14 px-8 rounded-2xl border-neutral-200 dark:border-neutral-700 font-bold text-neutral-500"
+                                onClick={() => setIsAcceptModalOpen(false)}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </CardBody>
                 </Card>
             </Modal>
         </div>

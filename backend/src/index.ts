@@ -25,6 +25,7 @@ import pppRoutes from './routes/ppp.js';
 import dashboardRoutes from './routes/dashboard.js';
 import { oltRoutes } from './routes/olts.js';
 import accountingRoutes from './routes/accounting.js';
+import { zoneRoutes, subZoneRoutes, packageRoutes, boxRoutes, clientTypeRoutes } from './routes/config.js';
 
 // ============================================================================
 // APP FACTORY
@@ -185,6 +186,11 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(dashboardRoutes, { prefix: '/api/v1/dashboard' });
   await app.register(oltRoutes, { prefix: '/api/v1/olts' });
   await app.register(accountingRoutes, { prefix: '/api/accounting' });
+  await app.register(zoneRoutes, { prefix: '/api/v1/config/zones' });
+  await app.register(subZoneRoutes, { prefix: '/api/v1/config/sub-zones' });
+  await app.register(packageRoutes, { prefix: '/api/v1/config/packages' });
+  await app.register(boxRoutes, { prefix: '/api/v1/config/boxes' });
+  await app.register(clientTypeRoutes, { prefix: '/api/v1/config/client-types' });
 
   // Root endpoint
   app.get('/', async (request, reply) => {

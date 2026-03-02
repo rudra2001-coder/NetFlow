@@ -15,6 +15,7 @@ import {
   integer,
   jsonb,
   numeric,
+  bigint,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { type InferSelectModel } from 'drizzle-orm';
@@ -826,6 +827,127 @@ export const capacityForecasts = pgTable('capacity_forecasts', {
 });
 
 // ============================================================================
+// ZONES & SUB-ZONES (Hierarchical Region Management)
+// ============================================================================
+
+export const zoneStatusEnum = pgEnum('zone_status', ['active', 'inactive', 'maintenance']);
+
+export const zones = pgTable('zones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'),
+  parentId: uuid('parent_id'),
+  name: varchar('name', { length: 100 }).notNull(),
+  slug: varchar('slug', { length: 50 }).notNull(),
+  description: text('description'),
+  path: varchar('path', { length: 500 }).notNull(),
+  level: integer('level').default(0),
+  status: zoneStatusEnum('status').default('active').notNull(),
+  isPrimary: boolean('is_primary').default(false),
+  location: jsonb('location').default({ lat: null, lng: null }),
+  address: text('address'),
+  timezone: varchar('timezone', { length: 50 }).default('UTC'),
+  totalClients: integer('total_clients').default(0),
+  totalRevenue: numeric('total_revenue', { precision: 12, scale: 2 }).default('0'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const subZones = pgTable('sub_zones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  zoneId: uuid('zone_id').notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  code: varchar('code', { length: 20 }).notNull(),
+  description: text('description'),
+  status: zoneStatusEnum('status').default('active').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// PACKAGES (Service Offerings)
+// ============================================================================
+
+export const packageTypeEnum = pgEnum('package_type', ['internet', 'bundle', 'add_on']);
+
+export const packages = pgTable('packages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'),
+  zoneId: uuid('zone_id'),
+  name: varchar('name', { length: 100 }).notNull(),
+  slug: varchar('slug', { length: 50 }).notNull(),
+  description: text('description'),
+  type: packageTypeEnum('type').notNull(),
+  downloadSpeed: integer('download_speed').notNull(),
+  uploadSpeed: integer('upload_speed').notNull(),
+  burstLimit: integer('burst_limit'),
+  dataCap: bigint('data_cap', { mode: 'number' }),
+  fairUsageLimit: bigint('fair_usage_limit', { mode: 'number' }),
+  monthlyPrice: numeric('monthly_price', { precision: 10, scale: 2 }).notNull(),
+  setupFee: numeric('setup_fee', { precision: 10, scale: 2 }).default('0'),
+  currency: varchar('currency', { length: 3 }).default('USD'),
+  features: jsonb('features').default([]),
+  isHighlighted: boolean('is_highlighted').default(false),
+  isActive: boolean('is_active').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0),
+  validityDays: integer('validity_days').default(30),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// BOXES (Equipment/Unit Types)
+// ============================================================================
+
+export const boxTypeEnum = pgEnum('box_type', ['ONU', 'ONT', 'CPE', 'Router', 'Switch', 'OLT']);
+
+export const boxes = pgTable('boxes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'),
+  name: varchar('name', { length: 100 }).notNull(),
+  type: boxTypeEnum('type').notNull(),
+  model: varchar('model', { length: 100 }),
+  manufacturer: varchar('manufacturer', { length: 100 }),
+  specs: jsonb('specs').default({}),
+  unitCost: numeric('unit_cost', { precision: 10, scale: 2 }),
+  stockQuantity: integer('stock_quantity').default(0),
+  minStock: integer('min_stock').default(5),
+  defaultProfile: varchar('default_profile', { length: 100 }),
+  autoProvision: boolean('auto_provision').default(false),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// CLIENT TYPES (Customer Categories)
+// ============================================================================
+
+export const clientCategoryEnum = pgEnum('client_category', ['residential', 'commercial', 'enterprise', 'hotspot', 'isp']);
+
+export const clientTypes = pgTable('client_types', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'),
+  name: varchar('name', { length: 50 }).notNull(),
+  slug: varchar('slug', { length: 30 }).notNull(),
+  category: clientCategoryEnum('category').notNull(),
+  description: text('description'),
+  defaultPackageId: uuid('default_package_id'),
+  defaultBoxId: uuid('default_box_id'),
+  defaultProfile: varchar('default_profile', { length: 100 }),
+  billingCycle: varchar('billing_cycle', { length: 20 }).default('monthly'),
+  paymentTerms: integer('payment_terms').default(0),
+  portalAccess: boolean('portal_access').default(true),
+  selfService: boolean('self_service').default(false),
+  maxDevices: integer('max_devices').default(1),
+  allowMultipleConnections: boolean('allow_multiple_connections').default(false),
+  isDefault: boolean('is_default').default(false),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -847,6 +969,11 @@ export type Plugin = InferSelectModel<typeof plugins>;
 export type PluginEvent = InferSelectModel<typeof pluginEvents>;
 export type Region = InferSelectModel<typeof regions>;
 export type RouterCluster = InferSelectModel<typeof routerClusters>;
+export type Zone = InferSelectModel<typeof zones>;
+export type SubZone = InferSelectModel<typeof subZones>;
+export type Package = InferSelectModel<typeof packages>;
+export type Box = InferSelectModel<typeof boxes>;
+export type ClientType = InferSelectModel<typeof clientTypes>;
 export type CollectionConfig = InferSelectModel<typeof collectionConfigs>;
 export type TrafficAnalysis = InferSelectModel<typeof trafficAnalysis>;
 export type AnomalyRule = InferSelectModel<typeof anomalyRules>;

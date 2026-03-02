@@ -17,7 +17,7 @@ dotenvConfig({ path: path.resolve(__dirname, '../../.env') });
 const envSchema = z.object({
   // Server Configuration
   NODE_ENV: z.enum(['development', 'staging', 'production']).default('development'),
-  PORT: z.coerce.number().default(3001),
+  PORT: z.coerce.number().default(8080),
   API_PREFIX: z.string().default('/api/v1'),
 
   // Database Configuration (PostgreSQL + TimescaleDB)

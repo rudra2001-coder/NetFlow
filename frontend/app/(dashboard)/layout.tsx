@@ -25,7 +25,7 @@ import {
   Landmark, Scale, FileSearch, AlertCircle, OctagonAlert,
   Eye, EyeOff, Monitor, Globe2, Timer, GaugeCircle,
   FileSpreadsheet, UserPlus, UserMinus, CalendarClock, ArrowRightLeft,
-  Send, Archive, ClipboardList,
+  Send, Archive, ClipboardList, Plus, History, Ticket, MapPin,
 } from 'lucide-react';
 import { QuickSearch } from '@/components';
 
@@ -268,8 +268,8 @@ const navigationItems: NavItem[] = [
 
   // ── BILLING & FINANCE ────────────────────────────────────────────────────
   {
-    id: 'billing-finance',
-    label: 'Billing & Finance',
+    id: 'billing',
+    label: 'Billing ',
     icon: <Landmark className="w-[18px] h-[18px]" />,
     description: 'Revenue operations',
     children: [
@@ -282,8 +282,13 @@ const navigationItems: NavItem[] = [
         badgeColor: 'bg-orange-500',
         description: 'Invoice generation',
       },
-      {
-        id: 'accounting',
+     
+
+    ],
+  },
+  // ──Accounting ────────────────────────────────────────────────────
+{
+  id: 'accounting',
         label: 'Accounting',
         icon: <Calculator className="w-4 h-4" />,
         href: '/accounting',
@@ -296,10 +301,7 @@ const navigationItems: NavItem[] = [
           { id: 'acc-ledger', label: 'Ledger', icon: <BookOpen className="w-3.5 h-3.5" />, href: '/accounting/ledger', description: 'General ledger' },
           { id: 'acc-reconciliation', label: 'Reconciliation', icon: <ArrowLeftRight className="w-3.5 h-3.5" />, href: '/accounting/reconciliation', description: 'Bank matching' },
         ],
-      },
-
-    ],
-  },
+},
   // ── MacReseller ────────────────────────────────────────────────────
 
   {
@@ -423,7 +425,9 @@ const navigationItems: NavItem[] = [
     description: 'Tickets & helpdesk',
     children: [
       { id: 'support-dash', label: 'Support Pulse', icon: <Activity className="w-4 h-4" />, href: '/support', description: 'Live support metrics' },
+      { id: 'support-new', label: 'New Ticket', icon: <Plus className="w-4 h-4" />, href: '/support/new', description: 'Create new support ticket' },
       { id: 'support-tickets', label: 'Ticket Hub', icon: <HelpCircle className="w-4 h-4" />, href: '/support/tickets', badge: 3, badgeColor: 'bg-red-500', description: 'Open tickets' },
+      { id: 'support-history', label: 'Support History', icon: <History className="w-4 h-4" />, href: '/support/history', description: 'Past tickets & search' },
       { id: 'support-performance', label: 'Staff Analytics', icon: <Star className="w-4 h-4" />, href: '/support/performance', description: 'Agent performance' },
     ],
   },
@@ -439,6 +443,20 @@ const navigationItems: NavItem[] = [
       { id: 'settings-system', label: 'System', icon: <Shield className="w-4 h-4" />, href: '/settings/system', description: 'Core configuration' },
       { id: 'settings-users', label: 'Users & Access', icon: <UserCheck className="w-4 h-4" />, href: '/settings/users', description: 'Staff accounts' },
       { id: 'settings-integrations', label: 'Integrations', icon: <Plug className="w-4 h-4" />, href: '/settings/integrations', description: 'API & webhooks' },
+    ],
+  },
+
+  // ── CONFIGURATION ────────────────────────────────────────────────────────
+  {
+    id: 'configuration',
+    label: 'Configuration',
+    icon: <Settings className="w-[18px] h-[18px]" />,
+    description: 'Zones, Packages, Equipment',
+    children: [
+      { id: 'config-zones', label: 'Zones', icon: <MapPin className="w-4 h-4" />, href: '/configuration/zones', description: 'Hierarchical regions' },
+      { id: 'config-packages', label: 'Packages', icon: <Package className="w-4 h-4" />, href: '/configuration/packages', description: 'Service offerings' },
+      { id: 'config-boxes', label: 'Equipment', icon: <Boxes className="w-4 h-4" />, href: '/configuration/boxes', description: 'Unit types & inventory' },
+      { id: 'config-client-types', label: 'Client Types', icon: <Users2 className="w-4 h-4" />, href: '/configuration/client-types', description: 'Customer categories' },
     ],
   },
 ];
@@ -656,8 +674,9 @@ function Sidebar({
   // Group the navigation items for section labels
   const sections: { label: string; items: NavItem[] }[] = [
     { label: '', items: navigationItems.filter(i => i.id === 'dashboard') },
+    { label: 'General', items: navigationItems.filter(i => ['configuration', 'System'].includes(i.id)) },
     { label: 'Infrastructure', items: navigationItems.filter(i => ['network', 'mikrotek', 'olt-management'].includes(i.id)) },
-    { label: 'Business', items: navigationItems.filter(i => ['customers', 'billing-finance'].includes(i.id)) },
+    { label: 'Business', items: navigationItems.filter(i => ['customers', 'billing', 'accounting','client'].includes(i.id)) },
     { label: 'Operations', items: navigationItems.filter(i => ['analytics-group', 'automation'].includes(i.id)) },
     { label: 'Organization', items: navigationItems.filter(i => ['hr', 'support-group'].includes(i.id)) },
     { label: 'System', items: navigationItems.filter(i => ['settings'].includes(i.id)) },

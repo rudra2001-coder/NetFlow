@@ -98,7 +98,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                                 "p-2 rounded-xl transition-colors",
                                                 isActive ? "bg-white/10 text-white" : "bg-neutral-100 dark:bg-neutral-800 group-hover:bg-white dark:group-hover:bg-neutral-700"
                                             )}>
-                                                {React.cloneElement(tab.icon as React.ReactElement, { className: "w-5 h-5" })}
+                                                {React.cloneElement(tab.icon as React.ReactElement<{ className?: string }>, { className: "w-5 h-5" })}
                                             </div>
                                             <span className="uppercase tracking-widest">{tab.label}</span>
                                             {isActive && (

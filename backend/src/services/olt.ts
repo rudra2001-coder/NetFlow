@@ -374,11 +374,11 @@ class OltService {
       conditions.push(eq(oltAlarms.resolved, options.resolved));
     }
     
-    return db.query.oltAlarms.findMany({
+    return await db.query.oltAlarms.findMany({
       where: and(...conditions),
       orderBy: (alarms, { desc }) => [desc(alarms.createdAt)],
       limit: options?.limit ?? 100,
-    });
+    }) as unknown as OltAlarm[];
   }
 
   /**
@@ -440,14 +440,14 @@ class OltService {
     const conditions: any[] = [eq(oltMetrics.oltId, oltId)];
     
     if (options?.startTime) {
-      conditions.push(gt(oltMetrics.recordedAt, options.startTime));
+      conditions.push(gt((oltMetrics as any).recordedAt || (oltMetrics as any).createdAt, options.startTime));
     }
     
     return db.query.oltMetrics.findMany({
       where: and(...conditions),
-      orderBy: (metrics, { desc }) => [desc(metrics.recordedAt)],
+      orderBy: (metrics, { desc }) => [desc((metrics as any).recordedAt || (metrics as any).createdAt)],
       limit: options?.limit ?? 100,
-    });
+    }) as unknown as OltMetric[];
   }
 
   /**
